@@ -13,15 +13,3 @@ As part of that journey, we chose open source as our means of achieving it.
 ![banner](/banner.webp)
 
 Our contact email is info@cartesiancs.com
-
-### Founder
-
-Hello, I’m H. Jun Huh, the founder of cartesiancs.
-
-When I first started this organization,didn’t take it too seriously — it was simply a place for side projects.
-
-I began working on open source just for fun. Just creating interesting things and enjoying a bit of freedom along the way.
-
-But over time, things have changed.
-
-I’ve made up my mind to keep doing this for at least the next ten years.
