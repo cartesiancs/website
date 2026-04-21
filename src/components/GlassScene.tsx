@@ -1,4 +1,4 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import {
   Grid,
   Center,
@@ -17,6 +17,7 @@ import {
   TiltShift2,
 } from "@react-three/postprocessing";
 import { memo, useEffect, useState, type JSX } from "react";
+import type { OrthographicCamera } from "three";
 import { useResolutionStore } from "@/features/canvas/store";
 
 type MaterialConfig = {
@@ -170,6 +171,18 @@ function ReadySignal({ onReady }: { onReady: () => void }) {
   return null;
 }
 
+function ResponsiveZoom({ baseZoom = 75 }: { baseZoom?: number }) {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const zoom = Math.min(baseZoom, Math.max(28, size.width / 10));
+    if ("zoom" in camera) {
+      (camera as OrthographicCamera).zoom = zoom;
+      camera.updateProjectionMatrix();
+    }
+  }, [size.width, camera, baseZoom]);
+  return null;
+}
+
 const Shadows = memo(({ shadow }: { shadow: string }) => (
   <AccumulativeShadows
     frames={100}
@@ -241,8 +254,8 @@ export const GlassScene = ({
             environment={environment}
             config={materialConfig}
             rotation={[-Math.PI / 2, 0, 0]}
-            position={[0, -1, 2.25]}
-            scale={0.5}
+            position={[0, -1, 1]}
+            scale={0.35}
             text={text}
           >
             {text}
@@ -288,6 +301,7 @@ export const GlassScene = ({
           <TiltShift2 blur={0.15} />
         </EffectComposer>
         <OrbitControls enablePan={false} />
+        <ResponsiveZoom />
         <ReadySignal onReady={() => setReady(true)} />
       </Canvas>
     );
@@ -299,10 +313,10 @@ export const GlassScene = ({
         style={{
           position: "fixed",
           inset: 0,
-          width: "100vw",
-          height: "100vh",
           overflow: "hidden",
           background: "#000000",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          boxSizing: "border-box",
         }}
       >
         <LoadingOverlay ready={ready} />
