@@ -123,6 +123,17 @@ const itemTextStyle = css({
   fontWeight: 200,
 });
 
+const videoStyle = css({
+  display: "block",
+  width: "100%",
+  aspectRatio: "16 / 9",
+  marginTop: "6rem",
+  borderRadius: "12px",
+  "@media (max-width: 640px)": {
+    marginTop: "4rem",
+  },
+});
+
 const cardGridStyle = css({
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -180,7 +191,7 @@ const cardTextStyle = css({
 });
 
 const quoteStyle = css({
-  margin: "1.5rem 0 0 0",
+  margin: "6rem 0 0 0",
   paddingLeft: "1.25rem",
   borderLeft: "1px solid rgb(36, 36, 43)",
   fontSize: "1rem",
@@ -197,12 +208,24 @@ const quoteNameStyle = css({
 });
 
 const faqListStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "1rem",
   marginTop: "6rem",
-  borderTop: "1px solid rgb(36, 36, 43)",
+  "@media (max-width: 640px)": {
+    marginTop: "4rem",
+  },
 });
 
 const faqItemStyle = css({
-  borderBottom: "1px solid rgb(36, 36, 43)",
+  padding: "0 1.5rem",
+  borderRadius: "12px",
+  border: "1px solid rgb(36, 36, 43)",
+  transition: "border-color 0.3s ease, background-color 0.3s ease",
+  ":hover": {
+    borderColor: "rgb(70, 70, 80)",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+  },
 });
 
 const faqQuestionStyle = css({
@@ -211,7 +234,7 @@ const faqQuestionStyle = css({
   justifyContent: "space-between",
   gap: "1rem",
   width: "100%",
-  padding: "1.1rem 0",
+  padding: "1.35rem 0",
   background: "none",
   border: "none",
   textAlign: "left",
@@ -376,6 +399,16 @@ export function CartCut() {
           </a>
         </div>
 
+        <iframe
+          css={videoStyle}
+          src="https://www.youtube.com/embed/AFZVSosNOUw?si=QTgA76zITTZGxTJV"
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        ></iframe>
+
         <div css={cardGridStyle}>
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <div key={title} css={cardStyle}>
@@ -422,7 +455,7 @@ export function CartCut() {
         <blockquote css={quoteStyle}>
           I made this because I was pissed off that the free editing program
           started charging for its services.
-          <span css={quoteNameStyle}>H. Jun Huh</span>
+          <span css={quoteNameStyle}>H. Jun Huh @ cartesiancs</span>
         </blockquote>
 
         <div css={faqListStyle}>
