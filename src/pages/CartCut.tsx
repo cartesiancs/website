@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Github, Layers, Puzzle, Sparkles } from "lucide-react";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
@@ -8,6 +8,36 @@ import Footer from "../components/Footer";
 
 const DOWNLOAD_URL = "https://github.com/cartesiancs/cartcut/releases";
 const REPO_URL = "https://github.com/cartesiancs/cartcut";
+// Rewritten by the cartcut repo's mirror-r2 workflow on every release.
+const LATEST_URL = "https://download.cartesiancs.com/cartcut/latest.json";
+
+type Download = { url: string; size: number };
+type LatestRelease = {
+  version: string;
+  notesUrl: string;
+  mac: { arm64?: Download; x64?: Download };
+};
+
+// Until the manifest answers, or if it never does, the buttons keep pointing at
+// the GitHub releases page, so the download link always goes somewhere.
+function useLatestRelease(): LatestRelease | null {
+  const [latest, setLatest] = useState<LatestRelease | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(LATEST_URL, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.version && data?.mac) setLatest(data);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  return latest;
+}
+
+function formatSize(bytes: number) {
+  return `${(bytes / 1e9).toFixed(1)} GB`;
+}
 
 const pageStyle = css({
   display: "flex",
@@ -83,6 +113,14 @@ const secondaryButtonStyle = css({
     borderColor: "rgb(70, 70, 80)",
     color: "#ffffff",
   },
+});
+
+const downloadMetaStyle = css({
+  margin: "0.9rem 0 0 0",
+  fontSize: "0.85rem",
+  lineHeight: 1.6,
+  color: "#8a8a8f",
+  fontWeight: 200,
 });
 
 const buttonIconStyle = css({
@@ -363,6 +401,8 @@ const FAQ_ITEMS = [
 
 export function CartCut() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const latest = useLatestRelease();
+  const macDownload = latest?.mac.arm64;
 
   return (
     <div css={pageStyle}>
@@ -379,11 +419,12 @@ export function CartCut() {
         </p>
 
         <div css={actionsStyle}>
+          {/* A direct file link downloads in place; only the fallback, a
+              page, opens a tab. */}
           <a
             css={[buttonBaseStyle, primaryButtonStyle]}
-            href={DOWNLOAD_URL}
-            target="_blank"
-            rel="noreferrer"
+            href={macDownload?.url ?? DOWNLOAD_URL}
+            {...(macDownload ? {} : { target: "_blank", rel: "noreferrer" })}
           >
             <AppleIcon />
             Download for macOS
@@ -398,6 +439,29 @@ export function CartCut() {
             View on GitHub
           </a>
         </div>
+
+        {latest && macDownload && (
+          <p css={downloadMetaStyle}>
+            v{latest.version} for Apple Silicon, {formatSize(macDownload.size)}
+            {latest.mac.x64 && (
+              <>
+                {" · "}
+                <a css={linkStyle} href={latest.mac.x64.url}>
+                  Intel Mac
+                </a>
+              </>
+            )}
+            {" · "}
+            <a
+              css={linkStyle}
+              href={latest.notesUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Release notes
+            </a>
+          </p>
+        )}
 
         <iframe
           css={videoStyle}
