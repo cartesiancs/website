@@ -184,6 +184,9 @@ const cardGridStyle = css({
 });
 
 const cardStyle = css({
+  position: "relative",
+  isolation: "isolate",
+  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
@@ -194,7 +197,25 @@ const cardStyle = css({
   ":hover": {
     borderColor: "rgb(70, 70, 80)",
     backgroundColor: "rgba(255, 255, 255, 0.04)",
+    "& > img": {
+      opacity: 1,
+    },
   },
+});
+
+// Sits behind the card content; the mask fades the top out so the title and
+// text stay readable over the screenshot.
+const cardImageStyle = css({
+  position: "absolute",
+  inset: 0,
+  zIndex: -1,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  opacity: 0,
+  transition: "opacity 0.5s ease",
+  maskImage: "linear-gradient(to bottom, transparent 10%, #000 100%)",
+  pointerEvents: "none",
 });
 
 const cardIconWrapStyle = css({
@@ -356,16 +377,19 @@ const FEATURES = [
     icon: Layers,
     title: "Unlimited timeline",
     text: "Stack video, audio, text, and images across an unlimited number of layers, as far as the edit needs to go.",
+    image: "/cc-timeline.jpg",
   },
   {
     icon: Sparkles,
     title: "Advanced motion",
     text: "Keyframes, easing, and transforms live in the timeline itself, so motion you would look for in After Effects stays one tool away.",
+    image: "/cc-motion.jpg",
   },
   {
     icon: Puzzle,
     title: "External extensions",
     text: "The editor is built to be extended, so a missing capability is something you can write rather than wait for.",
+    image: "/cc-ext.jpg",
   },
 ];
 
@@ -474,8 +498,9 @@ export function CartCut() {
         ></iframe>
 
         <div css={cardGridStyle}>
-          {FEATURES.map(({ icon: Icon, title, text }) => (
+          {FEATURES.map(({ icon: Icon, title, text, image }) => (
             <div key={title} css={cardStyle}>
+              <img css={cardImageStyle} src={image} alt="" loading="lazy" />
               <span css={cardIconWrapStyle}>
                 <Icon css={cardIconStyle} />
               </span>
