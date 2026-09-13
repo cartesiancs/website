@@ -1,6 +1,6 @@
 # About
 
-cartesiancs ( pronounced `/kɑːrˈtiːʒəns/`)
+cartesiancs ( pronounced: `/kɑːrˈtiːʒəns/`, Korean: `카르테시안스`)
 
 We embrace open source culture and work to **reduce reliance on centralized authority** as much as possible.
 

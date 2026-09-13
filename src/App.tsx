@@ -9,6 +9,7 @@ import Post from "./pages/Post";
 import { Fleet } from "./pages/Fleet";
 import { Career } from "./pages/Career";
 import { CareerProductEngineer } from "./pages/CareerProductEngineer";
+import { NotFound } from "./pages/NotFound";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             path="/career/product-engineer"
             element={<CareerProductEngineer />}
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>
