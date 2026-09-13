@@ -1,6 +1,13 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { useEffect, useState } from "react";
+import {
+  ReactNode,
+  PointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDown, Github, Layers, Puzzle, Sparkles } from "lucide-react";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
@@ -143,6 +150,24 @@ const itemListStyle = css({
   flexDirection: "column",
   gap: "1.75rem",
   marginTop: "6rem",
+});
+
+// Covers the viewport so icons can fly into the side gutters, and clips them at
+// the screen edge so they never widen the page.
+const sprayLayerStyle = css({
+  position: "fixed",
+  inset: 0,
+  zIndex: 10,
+  overflow: "hidden",
+  pointerEvents: "none",
+});
+
+const sprayIconStyle = css({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  opacity: 0,
+  willChange: "transform, opacity",
 });
 
 const itemTitleStyle = css({
@@ -372,6 +397,174 @@ function AppleIcon() {
   );
 }
 
+const SPRAY_COLORS = ["#ffffff", "#e6e6eb", "#bfbfc7", "#8a8a8f"];
+const SPRAY_FRAMES = 24;
+const SPRAY_INTERVAL_MS = 50;
+const SPRAY_BURST = 6;
+// Below this much side gutter (phones, narrow windows) there is nowhere to fly.
+const SPRAY_MIN_REACH = 80;
+const SPRAY_MAX_PARTICLES = 120;
+
+type SprayParticle = {
+  id: number;
+  size: number;
+  color: string;
+  duration: number;
+  keyframes: Keyframe[];
+};
+
+function random(min: number, max: number) {
+  return min + Math.random() * (max - min);
+}
+
+// Fast at launch, coasting to a stop at progress 1, like motion under drag.
+function drag(progress: number, strength: number) {
+  return (1 - Math.exp(-strength * progress)) / (1 - Math.exp(-strength));
+}
+
+function createSprayParticle(
+  id: number,
+  originX: number,
+  originY: number,
+  direction: -1 | 1,
+  reach: number,
+): SprayParticle {
+  const size = random(14, 30);
+  const distance = random(0.35, 1) * reach;
+  const rise = Math.tan(random(-0.6, 0.6)) * distance;
+  const gravity = random(20, 70);
+  const spin = direction * random(360, 900);
+  // Half the diagonal clears the item even mid-turn, so no icon covers the text.
+  const startX = originX + direction * (size * 0.75 + 8);
+
+  // Sampled in JS because the path mixes drag, gravity, and spin, which no
+  // single CSS easing curve can describe.
+  const keyframes = Array.from({ length: SPRAY_FRAMES + 1 }, (_, frame) => {
+    const progress = frame / SPRAY_FRAMES;
+    const travel = drag(progress, 3);
+    const x = startX + direction * distance * travel - size / 2;
+    const y = originY + rise * travel + gravity * progress ** 2 - size / 2;
+    const rotate = spin * drag(progress, 1.5);
+    const scale = 0.4 + 0.6 * Math.min(progress / 0.2, 1);
+    const opacity = Math.min(progress / 0.08, (1 - progress) / 0.35, 1);
+    return {
+      offset: progress,
+      opacity,
+      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg) scale(${scale})`,
+    };
+  });
+
+  return {
+    id,
+    size,
+    color: SPRAY_COLORS[Math.floor(Math.random() * SPRAY_COLORS.length)],
+    duration: random(900, 1500),
+    keyframes,
+  };
+}
+
+function SprayIcon({
+  particle,
+  onDone,
+}: {
+  particle: SprayParticle;
+  onDone: (id: number) => void;
+}) {
+  const ref = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const animation = ref.current?.animate(particle.keyframes, {
+      duration: particle.duration,
+    });
+    if (!animation) return;
+    animation.onfinish = () => onDone(particle.id);
+    return () => animation.cancel();
+  }, [particle, onDone]);
+
+  return (
+    <Github
+      ref={ref}
+      css={sprayIconStyle}
+      size={particle.size}
+      strokeWidth={1.5}
+      color={particle.color}
+    />
+  );
+}
+
+// Hovering the wrapped area sprays spinning GitHub marks out of both sides into
+// the empty gutters beside the content column.
+function GithubSpray({ children }: { children: ReactNode }) {
+  const areaRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number>();
+  const nextIdRef = useRef(0);
+  const [particles, setParticles] = useState<SprayParticle[]>([]);
+
+  const spray = useCallback((perSide: number) => {
+    const area = areaRef.current;
+    if (!area) return;
+    const rect = area.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    const sides = [
+      { direction: -1 as const, originX: rect.left, reach: rect.left },
+      {
+        direction: 1 as const,
+        originX: rect.right,
+        reach: viewportWidth - rect.right,
+      },
+    ];
+
+    const born: SprayParticle[] = [];
+    for (const side of sides) {
+      if (side.reach < SPRAY_MIN_REACH) continue;
+      for (let i = 0; i < perSide; i++) {
+        born.push(
+          createSprayParticle(
+            nextIdRef.current++,
+            side.originX,
+            random(rect.top, rect.bottom),
+            side.direction,
+            side.reach,
+          ),
+        );
+      }
+    }
+    if (born.length === 0) return;
+    setParticles((prev) => [...prev, ...born].slice(-SPRAY_MAX_PARTICLES));
+  }, []);
+
+  const stop = useCallback(() => {
+    window.clearInterval(timerRef.current);
+    timerRef.current = undefined;
+  }, []);
+
+  const start = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    stop();
+    spray(SPRAY_BURST);
+    timerRef.current = window.setInterval(() => spray(1), SPRAY_INTERVAL_MS);
+  };
+
+  const remove = useCallback((id: number) => {
+    setParticles((prev) => prev.filter((particle) => particle.id !== id));
+  }, []);
+
+  useEffect(() => stop, [stop]);
+
+  return (
+    <div ref={areaRef} onPointerEnter={start} onPointerLeave={stop}>
+      {children}
+      {particles.length > 0 && (
+        <div css={sprayLayerStyle} aria-hidden="true">
+          {particles.map((particle) => (
+            <SprayIcon key={particle.id} particle={particle} onDone={remove} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const FEATURES = [
   {
     icon: Layers,
@@ -511,13 +704,13 @@ export function CartCut() {
         </div>
 
         <div css={itemListStyle}>
-          <div>
+          <GithubSpray>
             <h3 css={itemTitleStyle}>Open source</h3>
             <p css={itemTextStyle}>
               The whole editor is public. Read it, fork it, ship a patch, or run
               your own build.
             </p>
-          </div>
+          </GithubSpray>
           <div>
             <h3 css={itemTitleStyle}>Easy editing</h3>
             <p css={itemTextStyle}>

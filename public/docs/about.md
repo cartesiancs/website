@@ -2,7 +2,7 @@
 
 cartesiancs ( pronounced `/kɑːrˈtiːʒəns/`)
 
-We embrace open source culture and work to reduce reliance on centralized authority as much as possible.
+We embrace open source culture and work to **reduce reliance on centralized authority** as much as possible.
 
 One of the projects we worked on is [cartesiancs/cartcut](https://github.com/cartesiancs/cartcut), and our current ongoing project is [cartesiancs/vessel](https://github.com/cartesiancs/vessel), [cartesiancs/map3d](https://github.com/cartesiancs/map3d). [and more.](https://github.com/cartesiancs)
 
