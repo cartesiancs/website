@@ -178,6 +178,14 @@ const itemTitleStyle = css({
   color: "#ffffff",
 });
 
+// Inline-block so the span is only as wide as its text, which is what the
+// slide distance is measured from; scaling pins to the left edge.
+const springTitleStyle = css({
+  display: "inline-block",
+  transformOrigin: "left center",
+  willChange: "transform",
+});
+
 const itemTextStyle = css({
   margin: "0.5rem 0 0 0",
   fontSize: "0.95rem",
@@ -565,6 +573,92 @@ function GithubSpray({ children }: { children: ReactNode }) {
   );
 }
 
+const SPRING_FRAME_MS = 1000 / 60;
+
+// A damped spring released at rest from 0 toward 1, sampled once per frame
+// until it settles. Damping ratio is about 0.6: one clear overshoot, then calm.
+const SPRING_CURVE = (() => {
+  const stiffness = 260;
+  const damping = 20;
+  const substeps = 4;
+  const dt = SPRING_FRAME_MS / 1000 / substeps;
+  let position = 0;
+  let velocity = 0;
+  const samples = [0];
+  while (samples.length < 240) {
+    for (let i = 0; i < substeps; i++) {
+      velocity += (-stiffness * (position - 1) - damping * velocity) * dt;
+      position += velocity * dt;
+    }
+    samples.push(position);
+    if (Math.abs(position - 1) < 0.001 && Math.abs(velocity) < 0.01) break;
+  }
+  samples[samples.length - 1] = 1;
+  return samples;
+})();
+
+// One frame per keyframe: springs from -> to, then back to from.
+function springThereAndBack(
+  from: number,
+  to: number,
+  toKeyframe: (value: number) => Keyframe,
+): Keyframe[] {
+  const there = SPRING_CURVE.map((p) => from + (to - from) * p);
+  const back = SPRING_CURVE.slice(1).map((p) => to + (from - to) * p);
+  return [...there, ...back].map(toKeyframe);
+}
+
+type TitleMotion = (area: HTMLElement, title: HTMLElement) => Keyframe[];
+
+const slideToRightEdge: TitleMotion = (area, title) =>
+  springThereAndBack(0, area.clientWidth - title.offsetWidth, (x) => ({
+    transform: `translateX(${x}px)`,
+  }));
+
+const squeezeWidth: TitleMotion = () =>
+  springThereAndBack(1, 0.3, (scale) => ({ transform: `scaleX(${scale})` }));
+
+// Hovering the item plays the motion on its title once; hovering again while it
+// is still playing is ignored so the title never jumps mid-flight.
+function SpringTitleItem({
+  heading,
+  motion,
+  children,
+}: {
+  heading: string;
+  motion: TitleMotion;
+  children: ReactNode;
+}) {
+  const areaRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const animationRef = useRef<Animation>();
+
+  const play = () => {
+    const area = areaRef.current;
+    const title = titleRef.current;
+    if (!area || !title) return;
+    if (animationRef.current?.playState === "running") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const keyframes = motion(area, title);
+    animationRef.current = title.animate(keyframes, {
+      duration: (keyframes.length - 1) * SPRING_FRAME_MS,
+    });
+  };
+
+  useEffect(() => () => animationRef.current?.cancel(), []);
+
+  return (
+    <div ref={areaRef} onPointerEnter={play}>
+      <h3 css={itemTitleStyle}>
+        <span ref={titleRef} css={springTitleStyle}>
+          {heading}
+        </span>
+      </h3>
+      <p css={itemTextStyle}>{children}</p>
+    </div>
+  );
+}
+
 const FEATURES = [
   {
     icon: Layers,
@@ -711,20 +805,14 @@ export function CartCut() {
               your own build.
             </p>
           </GithubSpray>
-          <div>
-            <h3 css={itemTitleStyle}>Easy editing</h3>
-            <p css={itemTextStyle}>
-              An easy yet free style of editing. The basics are where you expect
-              them, and nothing is locked behind a plan.
-            </p>
-          </div>
-          <div>
-            <h3 css={itemTitleStyle}>Lightweight</h3>
-            <p css={itemTextStyle}>
-              A familiar and lightweight editor for smooth editing without
-              stumbling. It starts fast and stays out of the way.
-            </p>
-          </div>
+          <SpringTitleItem heading="Easy editing" motion={slideToRightEdge}>
+            An easy yet free style of editing. The basics are where you expect
+            them, and nothing is locked behind a plan.
+          </SpringTitleItem>
+          <SpringTitleItem heading="Lightweight" motion={squeezeWidth}>
+            A familiar and lightweight editor for smooth editing without
+            stumbling. It starts fast and stays out of the way.
+          </SpringTitleItem>
           <div>
             <h3 css={itemTitleStyle}>And more</h3>
             <p css={itemTextStyle}>
