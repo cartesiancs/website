@@ -8,7 +8,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronDown, Github, Layers, Puzzle, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  Github,
+  Layers,
+  Puzzle,
+  Sparkles,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
@@ -749,6 +757,13 @@ export function CartCut() {
             <Github css={buttonIconStyle} />
             View on GitHub
           </a>
+          <Link
+            css={[buttonBaseStyle, secondaryButtonStyle]}
+            to="/cartcut/tutorial"
+          >
+            <BookOpen css={buttonIconStyle} />
+            Tutorial
+          </Link>
         </div>
 
         {latest && macDownload && (
