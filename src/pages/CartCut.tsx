@@ -303,8 +303,6 @@ const demoCardStyle = css({
   boxSizing: "border-box",
   borderRadius: "16px",
   border: "1px solid rgb(36, 36, 43)",
-  background:
-    "radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 50%)",
   textDecoration: "none",
   transition: "border-color 0.3s ease, background-color 0.3s ease",
   ":hover": {
@@ -903,9 +901,9 @@ export function CartCut() {
           href={DEMO_URL}
           target="_blank"
           rel="noreferrer"
-          aria-label="Open the Cartcut web demo"
+          aria-label="Open the CartCut web demo"
         >
-          <h2 css={demoTitleStyle}>Try Cartcut in your browser</h2>
+          <h2 css={demoTitleStyle}>Try CartCut in your browser</h2>
           <div css={demoFooterStyle}>
             <span data-demo-cta css={[buttonBaseStyle, primaryButtonStyle]}>
               Open the demo
