@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {
+  ArrowUpRight,
   BookOpen,
   ChevronDown,
   Github,
@@ -23,6 +24,7 @@ import Footer from "../components/Footer";
 
 const DOWNLOAD_URL = "https://github.com/cartesiancs/cartcut/releases";
 const REPO_URL = "https://github.com/cartesiancs/cartcut";
+const DEMO_URL = "https://cartcut.cartesiancs.com/";
 // Rewritten by the cartcut repo's mirror-r2 workflow on every release.
 const LATEST_URL = "https://download.cartesiancs.com/cartcut/latest.json";
 
@@ -288,6 +290,65 @@ const cardTextStyle = css({
   lineHeight: 1.65,
   color: "#8a8a8f",
   fontWeight: 200,
+});
+
+// The whole card is the link; the button inside is only its visual anchor.
+const demoCardStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  minHeight: "260px",
+  marginTop: "6rem",
+  padding: "2.5rem",
+  boxSizing: "border-box",
+  borderRadius: "16px",
+  border: "1px solid rgb(36, 36, 43)",
+  background:
+    "radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 50%)",
+  textDecoration: "none",
+  transition: "border-color 0.3s ease, background-color 0.3s ease",
+  ":hover": {
+    borderColor: "rgb(70, 70, 80)",
+    backgroundColor: "rgba(255, 255, 255, 0.02)",
+    "& [data-demo-cta]": {
+      backgroundColor: "#d8d8e0",
+    },
+    "& [data-demo-arrow]": {
+      transform: "translate(2px, -2px)",
+    },
+  },
+  ":focus-visible": {
+    outline: "2px solid #ffffff",
+    outlineOffset: "4px",
+  },
+  "@media (max-width: 640px)": {
+    minHeight: "240px",
+    marginTop: "4rem",
+    padding: "1.75rem",
+  },
+});
+
+const demoTitleStyle = css({
+  maxWidth: "320px",
+  margin: 0,
+  fontSize: "1.9rem",
+  lineHeight: 1.2,
+  fontWeight: 500,
+  letterSpacing: "-0.02em",
+  color: "#ffffff",
+  "@media (max-width: 640px)": {
+    fontSize: "1.6rem",
+  },
+});
+
+// margin-top auto pushes the CTA to the bottom of the card.
+const demoFooterStyle = css({
+  marginTop: "auto",
+  paddingTop: "2rem",
+});
+
+const demoArrowStyle = css({
+  transition: "transform 0.3s ease",
 });
 
 const quoteStyle = css({
@@ -836,6 +897,25 @@ export function CartCut() {
             </p>
           </div>
         </div>
+
+        <a
+          css={demoCardStyle}
+          href={DEMO_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open the Cartcut web demo"
+        >
+          <h2 css={demoTitleStyle}>Try Cartcut in your browser</h2>
+          <div css={demoFooterStyle}>
+            <span data-demo-cta css={[buttonBaseStyle, primaryButtonStyle]}>
+              Open the demo
+              <ArrowUpRight
+                data-demo-arrow
+                css={[buttonIconStyle, demoArrowStyle]}
+              />
+            </span>
+          </div>
+        </a>
 
         <blockquote css={quoteStyle}>
           I made this because I was pissed off that the free editing program
