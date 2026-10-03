@@ -59,11 +59,17 @@ function storeLang(lang: Lang) {
   }
 }
 
+// The first of the browser's preferred languages that the docs are written in
+// wins, so "en-US, ko" stays English; a browser listing neither gets English.
 function browserLang(): Lang {
   const languages = navigator.languages?.length
     ? navigator.languages
     : [navigator.language];
-  return languages.some((l) => l?.toLowerCase().startsWith("ko")) ? "ko" : "en";
+  for (const language of languages) {
+    const base = language?.toLowerCase().split("-")[0];
+    if (isLang(base)) return base;
+  }
+  return "en";
 }
 
 // ?lang= wins, so a shared link opens in the language it was shared in; after
