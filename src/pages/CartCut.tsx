@@ -61,6 +61,10 @@ function formatSize(bytes: number) {
   return `${(bytes / 1e9).toFixed(1)} GB`;
 }
 
+// The column is wide enough for the video, cards and showcase, but running text
+// is held narrower so its lines stay readable.
+const PROSE_WIDTH = "640px";
+
 const pageStyle = css({
   display: "flex",
   minHeight: "100%",
@@ -71,7 +75,7 @@ const pageStyle = css({
 
 const contentStyle = css({
   width: "100%",
-  maxWidth: "720px",
+  maxWidth: "960px",
   padding: "6rem 2rem 8rem 2rem",
   boxSizing: "border-box",
   "@media (max-width: 640px)": {
@@ -89,6 +93,7 @@ const logoStyle = css({
 });
 
 const leadStyle = css({
+  maxWidth: PROSE_WIDTH,
   marginTop: "1.25rem",
   marginBottom: 0,
   fontSize: "1rem",
@@ -202,6 +207,7 @@ const springTitleStyle = css({
 });
 
 const itemTextStyle = css({
+  maxWidth: PROSE_WIDTH,
   margin: "0.5rem 0 0 0",
   fontSize: "0.95rem",
   lineHeight: 1.7,
@@ -414,9 +420,10 @@ const demoArrowStyle = css({
 const demoImageStyle = css({
   position: "absolute",
   top: "30%",
-  right: "-8%",
+  right: "-60px",
   zIndex: -1,
-  width: "70%",
+  // Capped so a wide card still frames the preview rather than cropping it.
+  width: "min(540px, 70%)",
   height: "auto",
   opacity: 0.2,
   transition: "opacity 0.4s ease",
@@ -429,6 +436,7 @@ const demoImageStyle = css({
 });
 
 const quoteStyle = css({
+  maxWidth: PROSE_WIDTH,
   margin: "6rem 0 0 0",
   paddingLeft: "1.25rem",
   borderLeft: "1px solid rgb(36, 36, 43)",
@@ -517,6 +525,7 @@ const faqAnswerStyle = css({
 });
 
 const faqAnswerTextStyle = css({
+  maxWidth: PROSE_WIDTH,
   margin: 0,
   paddingBottom: "1.25rem",
   paddingRight: "2rem",
