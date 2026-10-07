@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {
+  ArrowRight,
   ArrowUpRight,
   BookOpen,
   ChevronDown,
@@ -21,12 +22,16 @@ import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
+import { ShowcaseTile } from "../features/showcase/ShowcaseTile";
+import { SHOWCASE_ROOT, SHOWCASE_VIDEOS } from "../features/showcase/videos";
 
 const DOWNLOAD_URL = "https://github.com/cartesiancs/cartcut/releases";
 const REPO_URL = "https://github.com/cartesiancs/cartcut";
 const DEMO_URL = "https://cartcut.cartesiancs.com/";
 // Rewritten by the cartcut repo's mirror-r2 workflow on every release.
 const LATEST_URL = "https://download.cartesiancs.com/cartcut/latest.json";
+// The rest of the showcase is one "View more" away.
+const SHOWCASE_TILE_COUNT = 2;
 
 type Download = { url: string; size: number };
 type LatestRelease = {
@@ -290,6 +295,54 @@ const cardTextStyle = css({
   lineHeight: 1.65,
   color: "#8a8a8f",
   fontWeight: 200,
+});
+
+const showcaseStyle = css({
+  marginTop: "6rem",
+  "@media (max-width: 640px)": {
+    marginTop: "4rem",
+  },
+});
+
+const showcaseHeaderStyle = css({
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: "1rem",
+  marginBottom: "1.5rem",
+});
+
+const viewMoreStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.35rem",
+  flexShrink: 0,
+  fontSize: "0.85rem",
+  color: "#8a8a8f",
+  textDecoration: "none",
+  transition: "color 0.3s ease",
+  ":hover": {
+    color: "#ffffff",
+  },
+  ":hover svg": {
+    transform: "translateX(3px)",
+  },
+});
+
+const viewMoreIconStyle = css({
+  width: "16px",
+  height: "16px",
+  transition: "transform 0.3s ease",
+});
+
+const showcaseGridStyle = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "1rem",
+  "@media (max-width: 640px)": {
+    gridTemplateColumns: "minmax(0, 1fr)",
+    gap: "2rem",
+  },
 });
 
 // The whole card is the link; the button inside is only its visual anchor.
@@ -895,6 +948,21 @@ export function CartCut() {
             </p>
           </div>
         </div>
+
+        <section css={showcaseStyle}>
+          <div css={showcaseHeaderStyle}>
+            <h2 css={itemTitleStyle}>Made with CartCut</h2>
+            <Link css={viewMoreStyle} to={SHOWCASE_ROOT}>
+              View more
+              <ArrowRight css={viewMoreIconStyle} />
+            </Link>
+          </div>
+          <div css={showcaseGridStyle}>
+            {SHOWCASE_VIDEOS.slice(0, SHOWCASE_TILE_COUNT).map((video) => (
+              <ShowcaseTile key={video.id} video={video} />
+            ))}
+          </div>
+        </section>
 
         <a
           css={demoCardStyle}

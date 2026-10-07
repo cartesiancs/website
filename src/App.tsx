@@ -11,6 +11,7 @@ import { Career } from "./pages/Career";
 import { CareerProductEngineer } from "./pages/CareerProductEngineer";
 import { NotFound } from "./pages/NotFound";
 import { Tutorial } from "./pages/Tutorial";
+import { Showcase } from "./pages/Showcase";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/cartcut" element={<CartCut />} />
           <Route path="/cartcut/tutorial" element={<Tutorial />} />
           <Route path="/cartcut/tutorial/:slug" element={<Tutorial />} />
+          <Route path="/cartcut/showcase" element={<Showcase />} />
           <Route path="/posts/:slug" element={<Post />} />
           <Route path="/fleet" element={<Fleet />} />
           <Route path="/career" element={<Career />} />
