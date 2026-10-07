@@ -347,6 +347,9 @@ const showcaseGridStyle = css({
 
 // The whole card is the link; the button inside is only its visual anchor.
 const demoCardStyle = css({
+  position: "relative",
+  isolation: "isolate",
+  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
@@ -366,6 +369,9 @@ const demoCardStyle = css({
     },
     "& [data-demo-arrow]": {
       transform: "translate(2px, -2px)",
+    },
+    "& [data-demo-image]": {
+      opacity: 0.45,
     },
   },
   ":focus-visible": {
@@ -400,6 +406,26 @@ const demoFooterStyle = css({
 
 const demoArrowStyle = css({
   transition: "transform 0.3s ease",
+});
+
+// A dim screenshot of the editor in the bottom-right corner behind the card,
+// brightening on hover. The card clips its lower part, and the mask fades its
+// top-left edge so the title never sits on top of it.
+const demoImageStyle = css({
+  position: "absolute",
+  top: "30%",
+  right: "-8%",
+  zIndex: -1,
+  width: "70%",
+  height: "auto",
+  opacity: 0.2,
+  transition: "opacity 0.4s ease",
+  maskImage: "linear-gradient(135deg, transparent 10%, #000 55%)",
+  pointerEvents: "none",
+  "@media (max-width: 640px)": {
+    top: "40%",
+    width: "90%",
+  },
 });
 
 const quoteStyle = css({
@@ -971,6 +997,14 @@ export function CartCut() {
           rel="noreferrer"
           aria-label="Open the CartCut web demo"
         >
+          <img
+            data-demo-image
+            css={demoImageStyle}
+            src="/images/cartcut.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
           <h2 css={demoTitleStyle}>Try CartCut in your browser</h2>
           <div css={demoFooterStyle}>
             <span data-demo-cta css={[buttonBaseStyle, primaryButtonStyle]}>

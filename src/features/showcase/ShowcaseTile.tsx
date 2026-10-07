@@ -107,9 +107,6 @@ export function ShowcaseTile({ video }: { video: ShowcaseVideo }) {
         />
         <span css={durationStyle}>{formatDuration(video.seconds)}</span>
       </div>
-      <h3 data-tile-title css={titleStyle}>
-        {video.title}
-      </h3>
     </Link>
   );
 }
