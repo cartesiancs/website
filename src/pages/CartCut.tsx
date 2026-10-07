@@ -198,8 +198,8 @@ const itemTitleStyle = css({
   color: "#ffffff",
 });
 
-// Inline-block so the span is only as wide as its text, which is what the
-// slide distance is measured from; scaling pins to the left edge.
+// Inline-block so the span is only as wide as its text and scaling pins to its
+// left edge.
 const springTitleStyle = css({
   display: "inline-block",
   transformOrigin: "left center",
@@ -765,11 +765,6 @@ function springThereAndBack(
 
 type TitleMotion = (area: HTMLElement, title: HTMLElement) => Keyframe[];
 
-const slideToRightEdge: TitleMotion = (area, title) =>
-  springThereAndBack(0, area.clientWidth - title.offsetWidth, (x) => ({
-    transform: `translateX(${x}px)`,
-  }));
-
 const squeezeWidth: TitleMotion = () =>
   springThereAndBack(1, 0.3, (scale) => ({ transform: `scaleX(${scale})` }));
 
@@ -967,10 +962,13 @@ export function CartCut() {
               your own build.
             </p>
           </GithubSpray>
-          <SpringTitleItem heading="Easy editing" motion={slideToRightEdge}>
-            An easy yet free style of editing. The basics are where you expect
-            them, and nothing is locked behind a plan.
-          </SpringTitleItem>
+          <div>
+            <h3 css={itemTitleStyle}>Easy editing</h3>
+            <p css={itemTextStyle}>
+              An easy yet free style of editing. The basics are where you
+              expect them, and nothing is locked behind a plan.
+            </p>
+          </div>
           <SpringTitleItem heading="Lightweight" motion={squeezeWidth}>
             A familiar and lightweight editor for smooth editing without
             stumbling. It starts fast and stays out of the way.
