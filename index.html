@@ -7,6 +7,17 @@
     <meta name="theme-color" content="#000000" />
     <link rel="apple-touch-icon" href="/logo192.jpg" />
     <link rel="manifest" href="/manifest.json" />
+    <!-- Playball sets the CartCut wordmark and headline. The stylesheet loads
+         without blocking render, and browsers only fetch the font file on a
+         page that uses it. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playball&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
     <title>cartesiancs | Open Source Organization</title>
     <meta
       name="description"

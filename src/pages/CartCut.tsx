@@ -1,37 +1,45 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
+import { css, keyframes } from "@emotion/react";
 import {
+  type CSSProperties,
+  Fragment,
   ReactNode,
-  PointerEvent,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import {
-  ArrowRight,
+  ArrowUp,
   ArrowUpRight,
-  BookOpen,
-  ChevronDown,
-  Github,
-  Layers,
-  Puzzle,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
   Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
-import { ShowcaseTile } from "../features/showcase/ShowcaseTile";
-import { SHOWCASE_ROOT, SHOWCASE_VIDEOS } from "../features/showcase/videos";
+import {
+  ShowcaseTile,
+  usePlayInView,
+} from "../features/showcase/ShowcaseTile";
+import { SHOWCASE_VIDEOS } from "../features/showcase/videos";
+import { docPath, DOCS_ROOT } from "../features/tutorial/manifest";
 
 const DOWNLOAD_URL = "https://github.com/cartesiancs/cartcut/releases";
 const REPO_URL = "https://github.com/cartesiancs/cartcut";
 const DEMO_URL = "https://cartcut.cartesiancs.com/";
 // Rewritten by the cartcut repo's mirror-r2 workflow on every release.
 const LATEST_URL = "https://download.cartesiancs.com/cartcut/latest.json";
-// The rest of the showcase is one "View more" away.
-const SHOWCASE_TILE_COUNT = 2;
+// Two by two; the rest of the showcase is on its own page.
+const SHOWCASE_TILE_COUNT = 4;
+// A stand-in until the agent editing demo is recorded.
+const AGENT_VIDEO = {
+  src: "/videos/r2-preview.mp4",
+  poster: "/videos/r2.jpg",
+};
 
 type Download = { url: string; size: number };
 type LatestRelease = {
@@ -61,9 +69,94 @@ function formatSize(bytes: number) {
   return `${(bytes / 1e9).toFixed(1)} GB`;
 }
 
-// The column is wide enough for the video, cards and showcase, but running text
-// is held narrower so its lines stay readable.
-const PROSE_WIDTH = "640px";
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// The body background set in App.css.
+const PAGE_BG = "#0d0e0f";
+const TEXT = "#f5f5f7";
+const MUTED = "#86868b";
+const SURFACE = "#1c1c1f";
+const RAISED = "#27292c";
+const HAIRLINE = "rgba(255, 255, 255, 0.1)";
+// The blue of the wordmark's "cut", reused for links and focus rings.
+const ACCENT = "#93b2f0";
+const SCRIPT_FONT = '"Playball", "Snell Roundhand", cursive';
+
+const CONTENT_WIDTH = 1160;
+const GUTTER = "clamp(1.25rem, 5vw, 2.5rem)";
+const SECTION_GAP = "clamp(7rem, 15vw, 14rem)";
+// Where the content column starts, for rows that bleed past it to the right.
+const COLUMN_EDGE = `max(${GUTTER}, calc((100% - ${CONTENT_WIDTH}px) / 2))`;
+const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+// Fires once, by default when the element's top clears the bottom eighth of
+// the screen.
+function useInView<T extends Element>(rootMargin = "0px 0px -12% 0px") {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setInView(true);
+        observer.disconnect();
+      },
+      { rootMargin },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [rootMargin]);
+  return [ref, inView] as const;
+}
+
+const revealStyle = css({
+  opacity: 0,
+  transform: "translateY(2.5rem)",
+  transition: `opacity 1s ${EASE_OUT}, transform 1.2s ${EASE_OUT}`,
+  "&[data-shown='true']": {
+    opacity: 1,
+    transform: "none",
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    opacity: 1,
+    transform: "none",
+    transition: "none",
+  },
+});
+
+// Fades its children up the first time they scroll into view. Descendants can
+// key their own entrance off it with a "[data-shown='true'] &" selector.
+// With early, it starts the moment its top edge comes on screen.
+function Reveal({
+  children,
+  className,
+  delay = 0,
+  early = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  early?: boolean;
+}) {
+  const [ref, shown] = useInView<HTMLDivElement>(
+    early ? "0px" : undefined,
+  );
+  return (
+    <div
+      ref={ref}
+      css={revealStyle}
+      className={className}
+      data-shown={shown}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </div>
+  );
+}
 
 const pageStyle = css({
   display: "flex",
@@ -73,404 +166,1362 @@ const pageStyle = css({
   alignItems: "center",
 });
 
-const contentStyle = css({
-  width: "100%",
-  maxWidth: "960px",
-  padding: "6rem 2rem 8rem 2rem",
-  boxSizing: "border-box",
-  "@media (max-width: 640px)": {
-    padding: "7rem 1.5rem 6rem 1.5rem",
-  },
-});
-
-const logoStyle = css({
-  display: "block",
-  width: "100%",
-  maxWidth: "320px",
-  height: "auto",
-  marginTop: "2.5rem",
-  marginBottom: "3rem",
-});
-
-const leadStyle = css({
-  maxWidth: PROSE_WIDTH,
-  marginTop: "1.25rem",
-  marginBottom: 0,
-  fontSize: "1rem",
-  lineHeight: 1.7,
-  color: "#e6e6eb",
-  fontWeight: 200,
-});
-
-const actionsStyle = css({
+const mainStyle = css({
   display: "flex",
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: "0.75rem",
-  marginTop: "2rem",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+  paddingBottom: SECTION_GAP,
 });
 
-const buttonBaseStyle = css({
+const sectionStyle = css({
+  width: "100%",
+  maxWidth: `calc(${CONTENT_WIDTH}px + 2 * ${GUTTER})`,
+  marginTop: SECTION_GAP,
+  paddingInline: GUTTER,
+  boxSizing: "border-box",
+});
+
+const headingStyle = css({
+  margin: 0,
+  fontSize: "clamp(2.5rem, 6.4vw, 6rem)",
+  fontWeight: 700,
+  lineHeight: 1.05,
+  letterSpacing: "-0.035em",
+  textAlign: "center",
+  textWrap: "balance",
+  color: TEXT,
+});
+
+// Space between a section's heading block and what it introduces.
+const headingGapStyle = css({
+  marginBottom: "clamp(2.5rem, 6vw, 5.5rem)",
+});
+
+// Scales with the screen from a phone size, never under the 44px touch
+// target, up to the desktop size at about 700px wide. At the small end both
+// hero buttons still share one row on a 375px phone.
+const pillStyle = css({
   display: "inline-flex",
   alignItems: "center",
-  gap: "0.55rem",
-  padding: "0.7rem 1.2rem",
-  borderRadius: "8px",
-  fontSize: "0.9rem",
-  fontWeight: 500,
+  justifyContent: "center",
+  gap: "0.45em",
+  minHeight: "clamp(2.75rem, 2.2rem + 2.4vw, 3.25rem)",
+  padding: "0 clamp(0.8rem, 0.2rem + 2.6vw, 1.65rem)",
+  boxSizing: "border-box",
+  borderRadius: "999px",
+  fontSize: "clamp(0.84375rem, 0.69rem + 0.62vw, 1.0625rem)",
+  fontWeight: 600,
+  letterSpacing: "-0.01em",
   textDecoration: "none",
-  border: "1px solid transparent",
-  transition:
-    "background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease",
+  whiteSpace: "nowrap",
+  transition: `background-color 0.3s ease, transform 0.4s ${EASE_OUT}`,
+  ":active": {
+    transform: "scale(0.97)",
+  },
+  ":focus-visible": {
+    outline: `2px solid ${ACCENT}`,
+    outlineOffset: "3px",
+  },
 });
 
-const primaryButtonStyle = css({
+const pillPrimaryStyle = css({
   backgroundColor: "#ffffff",
-  color: "#0d0e0f",
+  color: "#000000",
   ":hover": {
-    backgroundColor: "#d8d8e0",
+    backgroundColor: "#e3e3e8",
   },
 });
 
-const secondaryButtonStyle = css({
-  backgroundColor: "transparent",
-  borderColor: "rgb(36, 36, 43)",
-  color: "#e6e6eb",
+const pillSecondaryStyle = css({
+  backgroundColor: RAISED,
+  color: TEXT,
   ":hover": {
-    borderColor: "rgb(70, 70, 80)",
-    color: "#ffffff",
+    backgroundColor: "#34363a",
   },
 });
 
-const downloadMetaStyle = css({
-  margin: "0.9rem 0 0 0",
-  fontSize: "0.85rem",
-  lineHeight: 1.6,
-  color: "#8a8a8f",
-  fontWeight: 200,
-});
-
-const buttonIconStyle = css({
-  width: "18px",
-  height: "18px",
+// Sized with the label so it shrinks along with the button.
+const pillIconStyle = css({
+  display: "block",
+  width: "1.18em",
+  height: "1.18em",
   flexShrink: 0,
 });
 
-const sectionTitleStyle = css({
-  margin: "3.5rem 0 0 0",
-  fontSize: "0.75rem",
-  fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "#8a8a8f",
-});
+// A direct file link downloads in place; only the fallback, a page, opens a tab.
+function DownloadButton({ download }: { download?: Download }) {
+  return (
+    <a
+      css={[pillStyle, pillPrimaryStyle]}
+      href={download?.url ?? DOWNLOAD_URL}
+      {...(download ? {} : { target: "_blank", rel: "noreferrer" })}
+    >
+      <img css={pillIconStyle} src="/images/cartcut/apple.svg" alt="" />
+      Download for macOS
+    </a>
+  );
+}
 
-const itemListStyle = css({
+const heroStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "1.75rem",
-  marginTop: "6rem",
+  alignItems: "center",
+  width: "100%",
+  maxWidth: `calc(1232px + 2 * ${GUTTER})`,
+  padding: `clamp(8rem, 14vw, 12.5rem) ${GUTTER} 0`,
+  boxSizing: "border-box",
+  textAlign: "center",
 });
 
-// Covers the viewport so icons can fly into the side gutters, and clips them at
-// the screen edge so they never widen the page.
-const sprayLayerStyle = css({
-  position: "fixed",
-  inset: 0,
-  zIndex: 10,
-  overflow: "hidden",
-  pointerEvents: "none",
-});
-
-const sprayIconStyle = css({
-  position: "absolute",
-  top: 0,
-  left: 0,
-  opacity: 0,
-  willChange: "transform, opacity",
-});
-
-const itemTitleStyle = css({
+const heroTitleStyle = css({
   margin: 0,
-  fontSize: "1.05rem",
-  fontWeight: 500,
-  letterSpacing: "-0.01em",
-  color: "#ffffff",
+  fontFamily: SCRIPT_FONT,
+  fontSize: "clamp(3rem, 6.4vw, 6rem)",
+  fontWeight: 400,
+  lineHeight: 1.2,
+  textWrap: "balance",
+  color: TEXT,
 });
 
-// Inline-block so the span is only as wide as its text and scaling pins to its
-// left edge.
-const springTitleStyle = css({
-  display: "inline-block",
-  transformOrigin: "left center",
-  willChange: "transform",
+const heroActionsStyle = css({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: "clamp(0.5rem, 2vw, 1rem)",
+  marginTop: "clamp(1.75rem, 3vw, 2.5rem)",
 });
 
-const itemTextStyle = css({
-  maxWidth: PROSE_WIDTH,
-  margin: "0.5rem 0 0 0",
-  fontSize: "0.95rem",
-  lineHeight: 1.7,
-  color: "#bfbfc7",
-  fontWeight: 200,
+const heroShotStyle = css({
+  width: "100%",
+  marginTop: "clamp(3rem, 6vw, 4.5rem)",
 });
 
-const videoStyle = css({
+const heroShotFrameStyle = css({
+  position: "relative",
+});
+
+const heroImageStyle = css({
   display: "block",
   width: "100%",
-  aspectRatio: "16 / 9",
-  marginTop: "6rem",
-  borderRadius: "12px",
-  "@media (max-width: 640px)": {
-    marginTop: "4rem",
-  },
+  height: "auto",
 });
 
-const cardGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-  gap: "1rem",
-  marginTop: "6rem",
-  "@media (max-width: 640px)": {
-    gridTemplateColumns: "minmax(0, 1fr)",
-    marginTop: "4rem",
-  },
-});
+// Shown on hover. Keyboard focus on the button shows it too, and on touch
+// screens, which cannot hover, a tap on the screenshot toggles it.
+const SHOW_HERO_CTA =
+  "[data-hero-frame]:focus-within &, [data-hero-frame][data-open='true'] &";
+const SHOW_HERO_CTA_ON_HOVER = "[data-hero-frame]:hover &";
 
-const cardStyle = css({
-  position: "relative",
-  isolation: "isolate",
-  overflow: "hidden",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  padding: "1.5rem",
-  borderRadius: "12px",
-  border: "1px solid rgb(36, 36, 43)",
-  transition: "border-color 0.3s ease, background-color 0.3s ease",
-  ":hover": {
-    borderColor: "rgb(70, 70, 80)",
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
-    "& > img": {
-      opacity: 1,
-    },
-  },
-});
-
-// Sits behind the card content; the mask fades the top out so the title and
-// text stay readable over the screenshot.
-const cardImageStyle = css({
+// Dims the screenshot around a centered button.
+const heroOverlayStyle = css({
   position: "absolute",
   inset: 0,
-  zIndex: -1,
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  opacity: 0,
-  transition: "opacity 0.5s ease",
-  maskImage: "linear-gradient(to bottom, transparent 10%, #000 100%)",
-  pointerEvents: "none",
-});
-
-const cardIconWrapStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  borderRadius: "10px",
-  color: "#ffffff",
-  marginBottom: "1.25rem",
+  background:
+    "radial-gradient(ellipse at center, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.38) 55%, rgba(0, 0, 0, 0) 80%)",
+  opacity: 0,
+  pointerEvents: "none",
+  transition: `opacity 0.45s ${EASE_OUT}`,
+  [SHOW_HERO_CTA]: {
+    opacity: 1,
+    pointerEvents: "auto",
+  },
+  "@media (hover: hover)": {
+    [SHOW_HERO_CTA_ON_HOVER]: {
+      opacity: 1,
+      pointerEvents: "auto",
+    },
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    transition: "none",
+  },
 });
 
-const cardIconStyle = css({
+const heroTutorialStyle = css({
+  minHeight: "clamp(2.75rem, 2.3rem + 2.4vw, 3.5rem)",
+  padding: "0 clamp(1.1rem, 0.6rem + 2.4vw, 2rem)",
+  fontSize: "clamp(0.9375rem, 0.85rem + 0.5vw, 1.125rem)",
+  boxShadow: "0 18px 50px rgba(0, 0, 0, 0.45)",
+  transform: "scale(0.9)",
+  transition: `background-color 0.3s ease, transform 0.5s ${EASE_OUT}`,
+  [SHOW_HERO_CTA]: {
+    transform: "scale(1)",
+  },
+  "@media (hover: hover)": {
+    [SHOW_HERO_CTA_ON_HOVER]: {
+      transform: "scale(1)",
+    },
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    transform: "none",
+  },
+});
+
+function HeroShot() {
+  const [open, setOpen] = useState(false);
+  const toggleOnTouch = () => {
+    if (window.matchMedia("(hover: none)").matches) setOpen((value) => !value);
+  };
+
+  return (
+    <div
+      data-hero-frame
+      data-open={open}
+      css={heroShotFrameStyle}
+      onClick={toggleOnTouch}
+    >
+      <img
+        css={heroImageStyle}
+        src="/images/cartcut.webp"
+        width={2950}
+        height={1932}
+        alt="The CartCut editor with a title over archive footage and a full timeline"
+      />
+      <div css={heroOverlayStyle}>
+        <Link
+          css={[pillStyle, pillPrimaryStyle, heroTutorialStyle]}
+          to={DOCS_ROOT}
+        >
+          View Tutorial
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+const flowHeadingStyle = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "0.4em",
+  whiteSpace: "nowrap",
+});
+
+// The arrow from the Figma draft, traced as two strokes so it can move: the
+// head starts at the left edge and travels to the tip while the shaft extends
+// behind it, kept in step by the same duration and easing.
+const ARROW_TIP = 306.027;
+const ARROW_MID = 44.1838;
+const ARROW_START_TIP = 44;
+const ARROW_TRAVEL = "0.85s cubic-bezier(0.65, 0, 0.25, 1) 0.1s";
+
+const flowArrowStyle = css({
+  display: "block",
+  flex: "0 1 300px",
+  minWidth: "1.25em",
+  height: "auto",
+  overflow: "visible",
+});
+
+const arrowShaftStyle = css({
+  strokeDasharray: ARROW_TIP,
+  strokeDashoffset: ARROW_TIP - ARROW_START_TIP,
+  transition: `stroke-dashoffset ${ARROW_TRAVEL}`,
+  "[data-shown='true'] &": {
+    strokeDashoffset: 0,
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    strokeDashoffset: 0,
+    transition: "none",
+  },
+});
+
+const arrowHeadStyle = css({
+  transform: `translateX(${ARROW_START_TIP - ARROW_TIP}px)`,
+  transition: `transform ${ARROW_TRAVEL}`,
+  "[data-shown='true'] &": {
+    transform: "none",
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    transform: "none",
+    transition: "none",
+  },
+});
+
+function FlowArrow() {
+  return (
+    <svg
+      css={flowArrowStyle}
+      viewBox="0 0 312.027 88.3675"
+      width="312.027"
+      height="88.3675"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={12}
+      aria-hidden="true"
+    >
+      <path css={arrowShaftStyle} d={`M0 ${ARROW_MID}H${ARROW_TIP}`} />
+      <path
+        css={arrowHeadStyle}
+        d={`M267.843 6L${ARROW_TIP} ${ARROW_MID}L267.843 82.3675`}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const visuallyHiddenStyle = css({
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+});
+
+const scatterCharStyle = css({
+  opacity: 0,
+  transition: "opacity 0.5s ease",
+  "[data-shown='true'] &": {
+    opacity: 1,
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    opacity: 1,
+    transition: "none",
+  },
+});
+
+// A random place in line for each of count items: ranks[i] is when item i
+// goes, from 0 to count - 1.
+function randomRanks(count: number) {
+  const order = Array.from({ length: count }, (_, index) => index);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const ranks: number[] = [];
+  order.forEach((index, rank) => {
+    ranks[index] = rank;
+  });
+  return ranks;
+}
+
+// Each letter fades in on its own, in a random order that is drawn anew every
+// time the page loads, while the arrow travels toward it.
+function ScatterWord({ word, start }: { word: string; start: number }) {
+  const [delays] = useState(() =>
+    randomRanks(word.length).map(
+      (rank) => start + rank * 55 + Math.random() * 40,
+    ),
+  );
+
+  return (
+    <span>
+      <span css={visuallyHiddenStyle}>{word}</span>
+      <span aria-hidden="true">
+        {[...word].map((char, index) => (
+          <span
+            key={index}
+            css={scatterCharStyle}
+            style={{ transitionDelay: `${delays[index]}ms` }}
+          >
+            {char}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+// Every card is the same size; each screenshot is cropped to fit it.
+const FLOW_CARD_WIDTH = "min(clamp(17.5rem, 30vw, 28rem), 82vw)";
+
+const scrollerStyle = css({
+  width: "100%",
+  overflowX: "auto",
+  overflowY: "hidden",
+  overscrollBehaviorX: "contain",
+  scrollSnapType: "x mandatory",
+  scrollPaddingInline: COLUMN_EDGE,
+  scrollbarWidth: "none",
+  touchAction: "pan-x pan-y",
+  "::-webkit-scrollbar": {
+    display: "none",
+  },
+});
+
+const trackStyle = css({
+  display: "flex",
+  gap: "clamp(1rem, 2vw, 1.5rem)",
+  width: "max-content",
+  margin: 0,
+  padding: `0 ${COLUMN_EDGE}`,
+  listStyle: "none",
+});
+
+const flowCardStyle = css({
+  position: "relative",
+  flex: "none",
+  width: FLOW_CARD_WIDTH,
+  aspectRatio: "11 / 10",
+  overflow: "hidden",
+  borderRadius: "clamp(20px, 2.4vw, 32px)",
+  backgroundColor: SURFACE,
+  scrollSnapAlign: "start",
+  isolation: "isolate",
+});
+
+const flowLinkStyle = css({
+  display: "block",
+  height: "100%",
+  textDecoration: "none",
+  ":focus-visible": {
+    outline: `2px solid ${ACCENT}`,
+    outlineOffset: "-2px",
+    borderRadius: "inherit",
+  },
+});
+
+const flowImageStyle = css({
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+});
+
+const flowCaptionStyle = css({
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  padding: "3.5rem 1.75rem 1.65rem",
+  background:
+    "linear-gradient(to top, rgba(12, 12, 14, 0.94) 30%, rgba(12, 12, 14, 0))",
+});
+
+const flowTitleStyle = css({
+  display: "block",
+  fontSize: "1.3125rem",
+  fontWeight: 700,
+  lineHeight: 1.2,
+  letterSpacing: "-0.02em",
+  color: TEXT,
+});
+
+const roundIconStyle = css({
   width: "18px",
   height: "18px",
-  strokeWidth: 1.5,
 });
 
-const cardTitleStyle = css({
-  margin: 0,
-  fontSize: "1rem",
-  fontWeight: 500,
-  letterSpacing: "-0.01em",
-  color: "#ffffff",
-});
-
-const cardTextStyle = css({
-  margin: "0.6rem 0 0 0",
-  fontSize: "0.9rem",
-  lineHeight: 1.65,
-  color: "#8a8a8f",
-  fontWeight: 200,
-});
-
-const showcaseStyle = css({
-  marginTop: "6rem",
-  "@media (max-width: 640px)": {
-    marginTop: "4rem",
-  },
-});
-
-const showcaseHeaderStyle = css({
+const carouselNavStyle = css({
   display: "flex",
-  alignItems: "baseline",
-  justifyContent: "space-between",
-  gap: "1rem",
-  marginBottom: "1.5rem",
+  justifyContent: "flex-end",
+  gap: "0.85rem",
+  width: "100%",
+  maxWidth: `calc(${CONTENT_WIDTH}px + 2 * ${GUTTER})`,
+  margin: "1.75rem auto 0",
+  paddingInline: GUTTER,
+  boxSizing: "border-box",
 });
 
-const viewMoreStyle = css({
+const carouselButtonStyle = css({
   display: "inline-flex",
   alignItems: "center",
-  gap: "0.35rem",
-  flexShrink: 0,
-  fontSize: "0.85rem",
-  color: "#8a8a8f",
-  textDecoration: "none",
-  transition: "color 0.3s ease",
-  ":hover": {
-    color: "#ffffff",
+  justifyContent: "center",
+  width: "2.75rem",
+  height: "2.75rem",
+  padding: 0,
+  border: "none",
+  borderRadius: "50%",
+  backgroundColor: RAISED,
+  color: TEXT,
+  cursor: "pointer",
+  transition: "background-color 0.3s ease, opacity 0.3s ease",
+  ":hover:not(:disabled)": {
+    backgroundColor: "#34363a",
   },
-  ":hover svg": {
-    transform: "translateX(3px)",
+  ":disabled": {
+    opacity: 0.35,
+    cursor: "default",
+  },
+  ":focus-visible": {
+    outline: `2px solid ${ACCENT}`,
+    outlineOffset: "3px",
   },
 });
 
-const viewMoreIconStyle = css({
-  width: "16px",
-  height: "16px",
-  transition: "transform 0.3s ease",
+const FLOW_CARDS = [
+  {
+    title: "Freedom Cut Edit",
+    image: "/images/cartcut/cut.webp",
+    focus: "left top",
+    slug: "cutting-and-trimming",
+  },
+  {
+    title: "Keyframes",
+    image: "/images/cartcut/keyframe.webp",
+    focus: "center top",
+    slug: "keyframes",
+  },
+  {
+    title: "Effects & Transitions",
+    image: "/images/cartcut/effects.webp",
+    focus: "center top",
+    slug: "effects-and-transitions",
+  },
+  {
+    title: "Templates",
+    image: "/images/cartcut/templates.webp",
+    focus: "center",
+    slug: "templates",
+  },
+];
+
+// A row of cards that runs off the right edge of the screen, scrolled by swipe
+// or by the arrow buttons beneath it.
+function FlowCarousel() {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: false });
+
+  const measure = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const { scrollLeft, clientWidth, scrollWidth } = scroller;
+    setEdges({
+      start: scrollLeft <= 4,
+      end: scrollLeft + clientWidth >= scrollWidth - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
+
+  const page = (direction: -1 | 1) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    scroller.scrollBy({
+      left: direction * scroller.clientWidth * 0.6,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  };
+
+  return (
+    <>
+      <div ref={scrollerRef} css={scrollerStyle} onScroll={measure}>
+        <ul css={trackStyle}>
+          {FLOW_CARDS.map(({ title, image, focus, slug }) => (
+            <li key={title} css={flowCardStyle}>
+              <Link css={flowLinkStyle} to={docPath(slug)}>
+                <img
+                  css={flowImageStyle}
+                  style={{ objectPosition: focus }}
+                  src={image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span css={flowCaptionStyle}>
+                  <span css={flowTitleStyle}>{title}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {!(edges.start && edges.end) && (
+        <div css={carouselNavStyle}>
+          <button
+            type="button"
+            css={carouselButtonStyle}
+            aria-label="Previous"
+            disabled={edges.start}
+            onClick={() => page(-1)}
+          >
+            <ChevronLeft css={roundIconStyle} strokeWidth={2.25} />
+          </button>
+          <button
+            type="button"
+            css={carouselButtonStyle}
+            aria-label="Next"
+            disabled={edges.end}
+            onClick={() => page(1)}
+          >
+            <ChevronRight css={roundIconStyle} strokeWidth={2.25} />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+const agentFrameStyle = css({
+  position: "relative",
+  overflow: "hidden",
+  aspectRatio: "1160 / 633",
+  borderRadius: "clamp(20px, 2.8vw, 36px)",
+  backgroundColor: "#000000",
+  isolation: "isolate",
+  "@media (max-width: 640px)": {
+    aspectRatio: "4 / 3",
+  },
 });
+
+const agentVideoStyle = css({
+  display: "block",
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+});
+
+const promptBarStyle = css({
+  position: "absolute",
+  left: "50%",
+  bottom: "clamp(1rem, 3vw, 2.25rem)",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  width: "min(36rem, calc(100% - 2rem))",
+  padding: "0.55rem 0.55rem 0.55rem 1.15rem",
+  boxSizing: "border-box",
+  borderRadius: "999px",
+  border: "1px solid rgba(255, 255, 255, 0.14)",
+  backgroundColor: "rgba(28, 28, 31, 0.62)",
+  backdropFilter: "blur(24px) saturate(180%)",
+  WebkitBackdropFilter: "blur(24px) saturate(180%)",
+  boxShadow: "0 16px 48px rgba(0, 0, 0, 0.35)",
+  transform: "translateX(-50%)",
+});
+
+const promptIconStyle = css({
+  width: "20px",
+  height: "20px",
+  flexShrink: 0,
+  color: ACCENT,
+});
+
+const promptTextStyle = css({
+  flex: 1,
+  minWidth: 0,
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  fontSize: "clamp(0.9375rem, 1.6vw, 1.125rem)",
+  fontWeight: 500,
+  letterSpacing: "-0.01em",
+  textAlign: "left",
+  color: TEXT,
+});
+
+const blink = keyframes({
+  "0%, 50%": { opacity: 1 },
+  "50.01%, 100%": { opacity: 0 },
+});
+
+const caretStyle = css({
+  display: "inline-block",
+  width: "2px",
+  height: "1.15em",
+  marginLeft: "2px",
+  verticalAlign: "-0.2em",
+  backgroundColor: ACCENT,
+  animation: `${blink} 1s step-end infinite`,
+  "@media (prefers-reduced-motion: reduce)": {
+    animation: "none",
+  },
+});
+
+const sendStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: "2.25rem",
+  height: "2.25rem",
+  borderRadius: "50%",
+  backgroundColor: "#ffffff",
+  color: "#000000",
+});
+
+// From the "What to ask for" list in the AI editing tutorial.
+const AGENT_PROMPTS = [
+  "Cut the silences out of this interview",
+  "Add subtitles to the whole video",
+  "Add a cross dissolve between every clip",
+  "Trim the first 30 seconds",
+];
+
+// Types each line out, holds it, erases it, and moves on to the next. Reduced
+// motion keeps the first line still.
+function useTypewriter(lines: string[], active: boolean) {
+  const [text, setText] = useState(lines[0]);
+  useEffect(() => {
+    if (!active || prefersReducedMotion()) return;
+    let line = 0;
+    let length = 0;
+    let erasing = false;
+    let timer: number;
+    const tick = () => {
+      const full = lines[line];
+      length += erasing ? -1 : 1;
+      setText(full.slice(0, length));
+      if (!erasing && length === full.length) {
+        erasing = true;
+        timer = window.setTimeout(tick, 2200);
+      } else if (erasing && length === 0) {
+        erasing = false;
+        line = (line + 1) % lines.length;
+        timer = window.setTimeout(tick, 450);
+      } else {
+        timer = window.setTimeout(tick, erasing ? 18 : 40 + Math.random() * 45);
+      }
+    };
+    setText("");
+    timer = window.setTimeout(tick, 700);
+    return () => window.clearTimeout(timer);
+  }, [lines, active]);
+  return text;
+}
+
+function PromptBar() {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const text = useTypewriter(AGENT_PROMPTS, inView);
+  return (
+    <div ref={ref} css={promptBarStyle} aria-hidden="true">
+      <Sparkles css={promptIconStyle} strokeWidth={1.75} />
+      <span css={promptTextStyle}>
+        {text}
+        <span css={caretStyle} />
+      </span>
+      <span css={sendStyle}>
+        <ArrowUp css={roundIconStyle} strokeWidth={2.5} />
+      </span>
+    </div>
+  );
+}
+
+function AgentDemo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  usePlayInView(videoRef);
+  return (
+    <div css={agentFrameStyle}>
+      <video
+        ref={videoRef}
+        css={agentVideoStyle}
+        src={AGENT_VIDEO.src}
+        poster={AGENT_VIDEO.poster}
+        muted
+        loop
+        playsInline
+        preload="none"
+        aria-hidden="true"
+      />
+      <PromptBar />
+    </div>
+  );
+}
+
+// The track is taller than the screen; while it scrolls past, the stage inside
+// stays pinned and the scroll distance drives the words.
+const slamTrackStyle = css({
+  position: "relative",
+  width: "100%",
+  height: "400vh",
+  marginTop: "clamp(2rem, 6vw, 5rem)",
+  "@media (prefers-reduced-motion: reduce)": {
+    height: "auto",
+  },
+});
+
+const slamStageStyle = css({
+  position: "sticky",
+  top: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: ["100vh", "100svh"],
+  paddingInline: GUTTER,
+  boxSizing: "border-box",
+  // A word starts several times its size; the stage crops it.
+  overflow: "hidden",
+  "@media (prefers-reduced-motion: reduce)": {
+    position: "relative",
+    height: "auto",
+    minHeight: "100vh",
+  },
+});
+
+// Above the cards.
+const slamHeadingStyle = css({
+  position: "relative",
+  zIndex: 1,
+});
+
+// Five by three squares centered behind the words (three by five on phones),
+// sized to fit the screen either way.
+const slamGridStyle = css({
+  "--tile": "min(14.5vw, 22.4vh, 220px)",
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  display: "grid",
+  gridTemplateColumns: "repeat(5, var(--tile))",
+  gridAutoRows: "var(--tile)",
+  gap: "calc(var(--tile) * 0.177)",
+  transform: "translate(-50%, -50%)",
+  // The cards behind the words stay faint so the headline reads over them.
+  maskImage:
+    "radial-gradient(ellipse 52% 50% at center, rgba(0, 0, 0, 0.22) 40%, #000 100%)",
+  "@media (max-width: 640px)": {
+    "--tile": "min(26vw, 15vh)",
+    gridTemplateColumns: "repeat(3, var(--tile))",
+  },
+});
+
+// Fade in one by one, in random order, along with the words' fill; fade out
+// together if the reader scrolls back up.
+const slamTileStyle = css({
+  overflow: "hidden",
+  borderRadius: "calc(var(--tile) * 0.19)",
+  backgroundColor: RAISED,
+  opacity: 0,
+  transition: "opacity 0.6s ease",
+  "[data-filled='true'] &": {
+    opacity: 1,
+    transitionDelay: "var(--delay)",
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    opacity: 1,
+    transition: "none",
+  },
+});
+
+const slamTileImageStyle = css({
+  display: "block",
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+});
+
+// Sample crops from the tutorial screenshots until the real artwork is in.
+const SLAM_TILES = [
+  "duotone",
+  "fonts",
+  "heart-mask",
+  "luts",
+  "title",
+  "tools",
+  "grade",
+  "title-presets",
+  "star-shape",
+  "speed-ramp",
+  "dissolve",
+  "effects",
+  "picture-in-picture",
+  "color",
+  "media",
+].map((name) => `/images/cartcut/grid/${name}.webp`);
+
+// Outlined while the words fall; filled once the last one has landed. The
+// stroke is painted under a fill in the page color: variable fonts keep
+// overlapping contours, and a bare stroke would trace those inside the
+// letters. Half the stroke shows, hence the doubled width.
+const slamWordStyle = css({
+  display: "inline-block",
+  transformOrigin: "50% 55%",
+  color: PAGE_BG,
+  WebkitTextStroke: `0.032em ${TEXT}`,
+  paintOrder: "stroke fill",
+  transition: "color 0.9s ease",
+  "[data-filled='true'] &": {
+    color: TEXT,
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    color: TEXT,
+    transition: "none",
+  },
+});
+
+// The stage already leaves half a screen below the words.
+const afterStageStyle = css({
+  marginTop: "clamp(2rem, 6vw, 5rem)",
+});
+
+const SLAM_WORDS = ["All", "in", "one", "Platform"];
+const SLAM_FROM_SCALE = 7;
+// Each word takes this share of the pinned scroll, starting a step after the
+// one before; the last lands with room left to fill the words and bring in
+// the cards before the stage moves on.
+const SLAM_SPAN = 0.18;
+const SLAM_STEP = 0.14;
+// Words crash slightly past their size, then settle back up to it.
+const SLAM_RECOIL = 0.93;
+const SLAM_IMPACT_AT = 0.8;
+// The moment the last word hits, before its recoil.
+const SLAM_FILL_AT =
+  (SLAM_WORDS.length - 1) * SLAM_STEP + SLAM_SPAN * SLAM_IMPACT_AT;
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+// Where a word is at progress t through its own share of the scroll. It
+// lingers huge and accelerates into place (ease-in), dropping from slightly
+// above, then recoils (ease-out).
+function slamFrame(t: number) {
+  if (t < SLAM_IMPACT_AT) {
+    const a = t / SLAM_IMPACT_AT;
+    const fall = a * a * a;
+    return {
+      scale: SLAM_FROM_SCALE + (SLAM_RECOIL - SLAM_FROM_SCALE) * fall,
+      drop: -0.6 * (1 - fall),
+      opacity: clamp01(a / 0.3),
+    };
+  }
+  const b = (t - SLAM_IMPACT_AT) / (1 - SLAM_IMPACT_AT);
+  const settle = 1 - (1 - b) * (1 - b);
+  return {
+    scale: SLAM_RECOIL + (1 - SLAM_RECOIL) * settle,
+    drop: 0,
+    opacity: 1,
+  };
+}
+
+function SlamHeadline() {
+  const trackRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [tileRanks] = useState(() => randomRanks(SLAM_TILES.length));
+
+  useEffect(() => {
+    const track = trackRef.current;
+    const stage = stageRef.current;
+    if (!track || !stage || prefersReducedMotion()) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = track.getBoundingClientRect();
+      const pinned = rect.height - stage.offsetHeight;
+      const progress = pinned > 0 ? clamp01(-rect.top / pinned) : 1;
+      wordRefs.current.forEach((word, index) => {
+        if (!word) return;
+        const { scale, drop, opacity } = slamFrame(
+          clamp01((progress - index * SLAM_STEP) / SLAM_SPAN),
+        );
+        word.style.transform = `translateY(${drop}em) scale(${scale})`;
+        word.style.opacity = String(opacity);
+      });
+      stage.dataset.filled = String(progress >= SLAM_FILL_AT);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    // The page scrolls on <body>, whose scroll events only reach a capturing
+    // listener.
+    document.addEventListener("scroll", schedule, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("scroll", schedule, { capture: true });
+      window.removeEventListener("resize", schedule);
+    };
+  }, []);
+
+  return (
+    <section ref={trackRef} css={slamTrackStyle}>
+      <div ref={stageRef} css={slamStageStyle}>
+        <div css={slamGridStyle} aria-hidden="true">
+          {SLAM_TILES.map((src, index) => (
+            <div
+              key={src}
+              css={slamTileStyle}
+              style={
+                { "--delay": `${tileRanks[index] * 35}ms` } as CSSProperties
+              }
+            >
+              <img
+                css={slamTileImageStyle}
+                src={src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          ))}
+        </div>
+        <h2 css={[headingStyle, slamHeadingStyle]}>
+          {SLAM_WORDS.map((word, index) => (
+            <Fragment key={word}>
+              {index > 0 && " "}
+              <span
+                ref={(node) => {
+                  wordRefs.current[index] = node;
+                }}
+                css={slamWordStyle}
+              >
+                {word}
+              </span>
+            </Fragment>
+          ))}
+        </h2>
+      </div>
+    </section>
+  );
+}
 
 const showcaseGridStyle = css({
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: "1rem",
+  gap: "clamp(2rem, 4vw, 3.5rem) clamp(1rem, 2.5vw, 2rem)",
   "@media (max-width: 640px)": {
     gridTemplateColumns: "minmax(0, 1fr)",
-    gap: "2rem",
   },
 });
 
-// The whole card is the link; the button inside is only its visual anchor.
 const demoCardStyle = css({
   position: "relative",
-  isolation: "isolate",
-  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
-  minHeight: "260px",
-  marginTop: "6rem",
-  padding: "2.5rem",
+  minHeight: "clamp(24rem, 36vw, 30rem)",
+  padding: "clamp(2rem, 5.5vw, 4.5rem)",
   boxSizing: "border-box",
-  borderRadius: "16px",
-  border: "1px solid rgb(36, 36, 43)",
+  overflow: "hidden",
+  isolation: "isolate",
+  borderRadius: "clamp(24px, 2.8vw, 36px)",
+  border: `1px solid ${RAISED}`,
   textDecoration: "none",
-  transition: "border-color 0.3s ease, background-color 0.3s ease",
+  transition: "border-color 0.4s ease",
   ":hover": {
-    borderColor: "rgb(70, 70, 80)",
-    backgroundColor: "rgba(255, 255, 255, 0.02)",
+    borderColor: "#3a3c40",
     "& [data-demo-cta]": {
-      backgroundColor: "#d8d8e0",
+      backgroundColor: "#e3e3e8",
     },
-    "& [data-demo-arrow]": {
-      transform: "translate(2px, -2px)",
-    },
-    "& [data-demo-image]": {
-      opacity: 0.45,
+    "& [data-demo-browser]": {
+      transform: "translateY(-0.5rem)",
     },
   },
   ":focus-visible": {
-    outline: "2px solid #ffffff",
+    outline: `2px solid ${ACCENT}`,
     outlineOffset: "4px",
   },
-  "@media (max-width: 640px)": {
-    minHeight: "240px",
-    marginTop: "4rem",
-    padding: "1.75rem",
+  "@media (max-width: 760px)": {
+    paddingBottom: 0,
   },
 });
 
+// Held to the left half so it never runs under the browser window.
 const demoTitleStyle = css({
-  maxWidth: "320px",
+  maxWidth: "min(9em, 46%)",
+  textWrap: "balance",
   margin: 0,
-  fontSize: "1.9rem",
-  lineHeight: 1.2,
-  fontWeight: 500,
-  letterSpacing: "-0.02em",
-  color: "#ffffff",
-  "@media (max-width: 640px)": {
-    fontSize: "1.6rem",
+  fontSize: "clamp(2.25rem, 4.3vw, 4rem)",
+  fontWeight: 700,
+  lineHeight: 1.08,
+  letterSpacing: "-0.035em",
+  color: TEXT,
+  "@media (max-width: 760px)": {
+    maxWidth: "9em",
   },
 });
 
-// margin-top auto pushes the CTA to the bottom of the card.
-const demoFooterStyle = css({
+const demoActionStyle = css({
   marginTop: "auto",
-  paddingTop: "2rem",
+  paddingTop: "2.5rem",
 });
 
-const demoArrowStyle = css({
-  transition: "transform 0.3s ease",
-});
-
-// A dim screenshot of the editor in the bottom-right corner behind the card,
-// brightening on hover. The card clips its lower part, and the mask fades its
-// top-left edge so the title never sits on top of it.
-const demoImageStyle = css({
+// A browser window peeking in from the lower right, cropped by the card.
+const browserStyle = css({
   position: "absolute",
-  top: "30%",
-  right: "-60px",
   zIndex: -1,
-  // Capped so a wide card still frames the preview rather than cropping it.
-  width: "min(540px, 70%)",
-  height: "auto",
-  opacity: 0.2,
-  transition: "opacity 0.4s ease",
-  maskImage: "linear-gradient(135deg, transparent 10%, #000 55%)",
-  pointerEvents: "none",
-  "@media (max-width: 640px)": {
-    top: "40%",
-    width: "90%",
+  top: "clamp(3.5rem, 8vw, 6.5rem)",
+  left: "54%",
+  width: "64%",
+  overflow: "hidden",
+  borderRadius: "14px",
+  border: `1px solid ${HAIRLINE}`,
+  backgroundColor: "#1a1b1d",
+  boxShadow: "0 30px 80px rgba(0, 0, 0, 0.5)",
+  transition: `transform 0.8s ${EASE_OUT}`,
+  "@media (max-width: 760px)": {
+    position: "relative",
+    top: 0,
+    left: 0,
+    width: "130%",
+    marginTop: "2.5rem",
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
 });
 
-const quoteStyle = css({
-  maxWidth: PROSE_WIDTH,
-  margin: "6rem 0 0 0",
-  paddingLeft: "1.25rem",
-  borderLeft: "1px solid rgb(36, 36, 43)",
-  fontSize: "1rem",
-  lineHeight: 1.7,
-  color: "#e6e6eb",
-  fontWeight: 200,
+const browserBarStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "0.45rem",
+  padding: "0.7rem 0.9rem",
+  borderBottom: `1px solid ${HAIRLINE}`,
 });
 
-const quoteNameStyle = css({
+const browserDotStyle = css({
+  width: "10px",
+  height: "10px",
+  borderRadius: "50%",
+  backgroundColor: "#3a3b3f",
+});
+
+const browserUrlStyle = css({
+  marginLeft: "1rem",
+  padding: "0.3rem 1rem",
+  borderRadius: "8px",
+  backgroundColor: "#26272a",
+  fontSize: "0.8125rem",
+  color: MUTED,
+  whiteSpace: "nowrap",
+});
+
+const browserImageStyle = css({
   display: "block",
-  marginTop: "0.75rem",
-  fontSize: "0.85rem",
-  color: "#8a8a8f",
+  width: "100%",
+  height: "auto",
 });
 
-const faqListStyle = css({
+const statGridStyle = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: "clamp(1rem, 2.5vw, 2rem)",
+  "@media (max-width: 760px)": {
+    gridTemplateColumns: "minmax(0, 1fr)",
+  },
+});
+
+const statCardStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "1rem",
-  marginTop: "6rem",
-  "@media (max-width: 640px)": {
-    marginTop: "4rem",
+  justifyContent: "space-between",
+  gap: "2.5rem",
+  height: "100%",
+  minHeight: "clamp(12rem, 21vw, 19.5rem)",
+  padding: "clamp(1.75rem, 3.2vw, 3rem)",
+  boxSizing: "border-box",
+  borderRadius: "clamp(20px, 2.8vw, 36px)",
+  backgroundColor: SURFACE,
+});
+
+const statValueStyle = css({
+  margin: 0,
+  fontSize: "clamp(3.25rem, 5vw, 4.75rem)",
+  fontWeight: 600,
+  lineHeight: 1,
+  letterSpacing: "-0.04em",
+  color: TEXT,
+});
+
+const statUnitStyle = css({
+  marginLeft: "0.08em",
+  fontSize: "0.5em",
+  letterSpacing: "-0.02em",
+});
+
+const statLabelStyle = css({
+  margin: 0,
+  fontSize: "clamp(1.125rem, 1.7vw, 1.5rem)",
+  fontWeight: 500,
+  lineHeight: 1.3,
+  letterSpacing: "-0.015em",
+  color: MUTED,
+});
+
+const STATS = [
+  { value: "8K", label: "Max resolution" },
+  { value: "240", unit: "fps", label: "Max frame rate" },
+  { value: "5K+", label: "Creators" },
+];
+
+const ultimateHeadingStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.22em",
+  margin: 0,
+  fontSize: "clamp(1.5rem, 7.2vw, 6rem)",
+  fontWeight: 700,
+  lineHeight: 1.2,
+  letterSpacing: "-0.035em",
+  color: TEXT,
+});
+
+const ultimateLineStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "0.28em",
+  whiteSpace: "nowrap",
+});
+
+// The slot takes whatever width the words leave on the line.
+const barSlotStyle = css({
+  display: "flex",
+  flex: "1 1 0",
+  minWidth: "0.6em",
+  height: "0.9em",
+});
+
+const barFillStyle = css({
+  width: 0,
+  height: "100%",
+  backgroundColor: "#ffffff",
+  transitionProperty: "width",
+  "[data-shown='true'] &": {
+    width: "100%",
   },
+  "@media (prefers-reduced-motion: reduce)": {
+    width: "100%",
+    transition: "none",
+  },
+});
+
+// Wiped in left to right with the same hard edge as the bar. The small
+// negative insets keep descenders and the last glyph's overhang uncut.
+const ultimateTextStyle = css({
+  display: "inline-block",
+  clipPath: "inset(-0.1em 100% -0.25em 0)",
+  transitionProperty: "clip-path",
+  "[data-shown='true'] &": {
+    clipPath: "inset(-0.1em -0.05em -0.25em 0)",
+  },
+  "@media (prefers-reduced-motion: reduce)": {
+    clipPath: "none",
+    transition: "none",
+  },
+});
+
+// Every line is drawn as one left-to-right stroke: whichever of the words and
+// the bar comes first speeds up into the other, which then eases to a stop.
+// Durations roughly follow each piece's width on a wide screen, so the stroke
+// keeps a steady pace across the seam.
+const ULTIMATE_LINES: {
+  text: string;
+  bar: "before" | "after";
+  textMs: number;
+  barMs: number;
+}[] = [
+  { text: "The Ultimate", bar: "after", textMs: 650, barMs: 800 },
+  { text: "Video Editing Platform", bar: "before", textMs: 950, barMs: 380 },
+  { text: "for Creators", bar: "before", textMs: 650, barMs: 700 },
+];
+
+const STROKE_START = "cubic-bezier(0.4, 0, 1, 1)";
+const STROKE_END = "cubic-bezier(0.3, 0.6, 0.4, 1)";
+
+// Timing for one piece of a line, given whether it leads the stroke.
+function strokeTiming(lead: boolean, start: number, leadMs: number, ms: number) {
+  return {
+    transitionDuration: `${ms}ms`,
+    transitionDelay: `${lead ? start : start + leadMs - 40}ms`,
+    transitionTimingFunction: lead ? STROKE_START : STROKE_END,
+  };
+}
+
+function UltimateLine({
+  line,
+  index,
+}: {
+  line: (typeof ULTIMATE_LINES)[number];
+  index: number;
+}) {
+  const start = 300 + index * 220;
+  const barLeads = line.bar === "before";
+  const leadMs = barLeads ? line.barMs : line.textMs;
+  const bar = (
+    <span css={barSlotStyle} aria-hidden="true">
+      <span
+        css={barFillStyle}
+        style={strokeTiming(barLeads, start, leadMs, line.barMs)}
+      />
+    </span>
+  );
+  return (
+    <span css={ultimateLineStyle}>
+      {barLeads && bar}
+      <span
+        css={ultimateTextStyle}
+        style={strokeTiming(!barLeads, start, leadMs, line.textMs)}
+      >
+        {line.text}
+      </span>
+      {!barLeads && bar}
+    </span>
+  );
+}
+
+const finaleStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+});
+
+const wordmarkStyle = css({
+  margin: 0,
+  fontFamily: SCRIPT_FONT,
+  fontSize: "clamp(4.5rem, 8.5vw, 8rem)",
+  fontWeight: 400,
+  lineHeight: 1.15,
+  color: TEXT,
+});
+
+const wordmarkCutStyle = css({
+  color: ACCENT,
+});
+
+const finaleActionsStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  marginTop: "clamp(2rem, 4vw, 3rem)",
+});
+
+const downloadMetaStyle = css({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: "0.25rem 1.25rem",
+  margin: "1.1rem 0 0 0",
+  fontSize: "0.9375rem",
+  lineHeight: 1.5,
+  fontWeight: 400,
+  color: MUTED,
+});
+
+const metaLinkStyle = css({
+  color: MUTED,
+  textDecoration: "underline",
+  textUnderlineOffset: "3px",
+  textDecorationColor: "rgba(134, 134, 139, 0.4)",
+  transition: "color 0.3s ease, text-decoration-color 0.3s ease",
+  ":hover": {
+    color: TEXT,
+    textDecorationColor: TEXT,
+  },
+});
+
+const faqSectionStyle = css({
+  maxWidth: `calc(820px + 2 * ${GUTTER})`,
+});
+
+const faqHeadingStyle = css({
+  margin: "0 0 clamp(2rem, 4vw, 3rem) 0",
+  fontSize: "clamp(2rem, 4vw, 3rem)",
+  fontWeight: 700,
+  letterSpacing: "-0.03em",
+  textAlign: "center",
+  color: TEXT,
 });
 
 const faqItemStyle = css({
-  padding: "0 1.5rem",
-  borderRadius: "12px",
-  border: "1px solid rgb(36, 36, 43)",
-  transition: "border-color 0.3s ease, background-color 0.3s ease",
-  ":hover": {
-    borderColor: "rgb(70, 70, 80)",
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
+  borderBottom: `1px solid ${HAIRLINE}`,
+  ":first-of-type": {
+    borderTop: `1px solid ${HAIRLINE}`,
   },
 });
 
@@ -478,42 +1529,43 @@ const faqQuestionStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: "1rem",
+  gap: "1.5rem",
   width: "100%",
-  padding: "1.35rem 0",
-  background: "none",
+  padding: "1.6rem 0",
   border: "none",
-  textAlign: "left",
+  background: "none",
   cursor: "pointer",
   fontFamily: "inherit",
-  fontSize: "1rem",
-  fontWeight: 400,
-  letterSpacing: "-0.01em",
-  color: "#e6e6eb",
-  transition: "color 0.3s ease",
-  ":hover": {
-    color: "#ffffff",
+  fontSize: "clamp(1.125rem, 1.8vw, 1.3125rem)",
+  fontWeight: 600,
+  letterSpacing: "-0.015em",
+  textAlign: "left",
+  color: TEXT,
+  ":focus-visible": {
+    outline: `2px solid ${ACCENT}`,
+    outlineOffset: "2px",
+    borderRadius: "6px",
   },
 });
 
-const faqChevronStyle = css({
-  width: "18px",
-  height: "18px",
+const faqIconStyle = css({
+  width: "22px",
+  height: "22px",
   flexShrink: 0,
-  color: "#8a8a8f",
-  transition: "transform 0.3s ease",
+  color: MUTED,
+  transition: `transform 0.4s ${EASE_OUT}, color 0.3s ease`,
 });
 
-const faqChevronOpenStyle = css({
-  transform: "rotate(180deg)",
-  color: "#ffffff",
+const faqIconOpenStyle = css({
+  transform: "rotate(45deg)",
+  color: TEXT,
 });
 
 // grid-template-rows 0fr -> 1fr animates the answer without a fixed height.
 const faqAnswerWrapStyle = css({
   display: "grid",
   gridTemplateRows: "0fr",
-  transition: "grid-template-rows 0.3s ease",
+  transition: `grid-template-rows 0.45s ${EASE_OUT}`,
 });
 
 const faqAnswerWrapOpenStyle = css({
@@ -525,310 +1577,25 @@ const faqAnswerStyle = css({
 });
 
 const faqAnswerTextStyle = css({
-  maxWidth: PROSE_WIDTH,
   margin: 0,
-  paddingBottom: "1.25rem",
-  paddingRight: "2rem",
-  fontSize: "0.95rem",
-  lineHeight: 1.7,
-  color: "#8a8a8f",
-  fontWeight: 200,
+  paddingBottom: "1.75rem",
+  paddingRight: "3rem",
+  fontSize: "1.0625rem",
+  lineHeight: 1.6,
+  fontWeight: 400,
+  color: MUTED,
 });
 
 const linkStyle = css({
-  color: "#ffffff",
+  color: TEXT,
   textDecoration: "underline",
   textUnderlineOffset: "3px",
   textDecorationColor: "rgb(70, 70, 80)",
   transition: "text-decoration-color 0.3s ease",
   ":hover": {
-    textDecorationColor: "#ffffff",
+    textDecorationColor: TEXT,
   },
 });
-
-// lucide-react ships a fruit for "apple", so the platform mark is inline.
-function AppleIcon() {
-  return (
-    <svg
-      css={buttonIconStyle}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M16.36 12.72c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.55.02-2.98.9-3.77 2.28-1.61 2.79-.41 6.92 1.15 9.19.77 1.11 1.68 2.35 2.87 2.31 1.15-.05 1.59-.74 2.98-.74 1.39 0 1.78.74 3 .72 1.24-.02 2.02-1.13 2.78-2.24.87-1.28 1.23-2.53 1.25-2.6-.03-.01-2.4-.92-2.42-3.7zM14.1 5.98c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.67 1.37-.59.68-1.1 1.76-.96 2.8 1.01.08 2.05-.51 2.69-1.28z" />
-    </svg>
-  );
-}
-
-const SPRAY_COLORS = ["#ffffff", "#e6e6eb", "#bfbfc7", "#8a8a8f"];
-const SPRAY_FRAMES = 24;
-const SPRAY_INTERVAL_MS = 50;
-const SPRAY_BURST = 6;
-// Below this much side gutter (phones, narrow windows) there is nowhere to fly.
-const SPRAY_MIN_REACH = 80;
-const SPRAY_MAX_PARTICLES = 120;
-
-type SprayParticle = {
-  id: number;
-  size: number;
-  color: string;
-  duration: number;
-  keyframes: Keyframe[];
-};
-
-function random(min: number, max: number) {
-  return min + Math.random() * (max - min);
-}
-
-// Fast at launch, coasting to a stop at progress 1, like motion under drag.
-function drag(progress: number, strength: number) {
-  return (1 - Math.exp(-strength * progress)) / (1 - Math.exp(-strength));
-}
-
-function createSprayParticle(
-  id: number,
-  originX: number,
-  originY: number,
-  direction: -1 | 1,
-  reach: number,
-): SprayParticle {
-  const size = random(14, 30);
-  const distance = random(0.35, 1) * reach;
-  const rise = Math.tan(random(-0.6, 0.6)) * distance;
-  const gravity = random(20, 70);
-  const spin = direction * random(360, 900);
-  // Half the diagonal clears the item even mid-turn, so no icon covers the text.
-  const startX = originX + direction * (size * 0.75 + 8);
-
-  // Sampled in JS because the path mixes drag, gravity, and spin, which no
-  // single CSS easing curve can describe.
-  const keyframes = Array.from({ length: SPRAY_FRAMES + 1 }, (_, frame) => {
-    const progress = frame / SPRAY_FRAMES;
-    const travel = drag(progress, 3);
-    const x = startX + direction * distance * travel - size / 2;
-    const y = originY + rise * travel + gravity * progress ** 2 - size / 2;
-    const rotate = spin * drag(progress, 1.5);
-    const scale = 0.4 + 0.6 * Math.min(progress / 0.2, 1);
-    const opacity = Math.min(progress / 0.08, (1 - progress) / 0.35, 1);
-    return {
-      offset: progress,
-      opacity,
-      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg) scale(${scale})`,
-    };
-  });
-
-  return {
-    id,
-    size,
-    color: SPRAY_COLORS[Math.floor(Math.random() * SPRAY_COLORS.length)],
-    duration: random(900, 1500),
-    keyframes,
-  };
-}
-
-function SprayIcon({
-  particle,
-  onDone,
-}: {
-  particle: SprayParticle;
-  onDone: (id: number) => void;
-}) {
-  const ref = useRef<SVGSVGElement>(null);
-  useEffect(() => {
-    const animation = ref.current?.animate(particle.keyframes, {
-      duration: particle.duration,
-    });
-    if (!animation) return;
-    animation.onfinish = () => onDone(particle.id);
-    return () => animation.cancel();
-  }, [particle, onDone]);
-
-  return (
-    <Github
-      ref={ref}
-      css={sprayIconStyle}
-      size={particle.size}
-      strokeWidth={1.5}
-      color={particle.color}
-    />
-  );
-}
-
-// Hovering the wrapped area sprays spinning GitHub marks out of both sides into
-// the empty gutters beside the content column.
-function GithubSpray({ children }: { children: ReactNode }) {
-  const areaRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<number>();
-  const nextIdRef = useRef(0);
-  const [particles, setParticles] = useState<SprayParticle[]>([]);
-
-  const spray = useCallback((perSide: number) => {
-    const area = areaRef.current;
-    if (!area) return;
-    const rect = area.getBoundingClientRect();
-    const viewportWidth = document.documentElement.clientWidth;
-    const sides = [
-      { direction: -1 as const, originX: rect.left, reach: rect.left },
-      {
-        direction: 1 as const,
-        originX: rect.right,
-        reach: viewportWidth - rect.right,
-      },
-    ];
-
-    const born: SprayParticle[] = [];
-    for (const side of sides) {
-      if (side.reach < SPRAY_MIN_REACH) continue;
-      for (let i = 0; i < perSide; i++) {
-        born.push(
-          createSprayParticle(
-            nextIdRef.current++,
-            side.originX,
-            random(rect.top, rect.bottom),
-            side.direction,
-            side.reach,
-          ),
-        );
-      }
-    }
-    if (born.length === 0) return;
-    setParticles((prev) => [...prev, ...born].slice(-SPRAY_MAX_PARTICLES));
-  }, []);
-
-  const stop = useCallback(() => {
-    window.clearInterval(timerRef.current);
-    timerRef.current = undefined;
-  }, []);
-
-  const start = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    stop();
-    spray(SPRAY_BURST);
-    timerRef.current = window.setInterval(() => spray(1), SPRAY_INTERVAL_MS);
-  };
-
-  const remove = useCallback((id: number) => {
-    setParticles((prev) => prev.filter((particle) => particle.id !== id));
-  }, []);
-
-  useEffect(() => stop, [stop]);
-
-  return (
-    <div ref={areaRef} onPointerEnter={start} onPointerLeave={stop}>
-      {children}
-      {particles.length > 0 && (
-        <div css={sprayLayerStyle} aria-hidden="true">
-          {particles.map((particle) => (
-            <SprayIcon key={particle.id} particle={particle} onDone={remove} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const SPRING_FRAME_MS = 1000 / 60;
-
-// A damped spring released at rest from 0 toward 1, sampled once per frame
-// until it settles. Damping ratio is about 0.6: one clear overshoot, then calm.
-const SPRING_CURVE = (() => {
-  const stiffness = 260;
-  const damping = 20;
-  const substeps = 4;
-  const dt = SPRING_FRAME_MS / 1000 / substeps;
-  let position = 0;
-  let velocity = 0;
-  const samples = [0];
-  while (samples.length < 240) {
-    for (let i = 0; i < substeps; i++) {
-      velocity += (-stiffness * (position - 1) - damping * velocity) * dt;
-      position += velocity * dt;
-    }
-    samples.push(position);
-    if (Math.abs(position - 1) < 0.001 && Math.abs(velocity) < 0.01) break;
-  }
-  samples[samples.length - 1] = 1;
-  return samples;
-})();
-
-// One frame per keyframe: springs from -> to, then back to from.
-function springThereAndBack(
-  from: number,
-  to: number,
-  toKeyframe: (value: number) => Keyframe,
-): Keyframe[] {
-  const there = SPRING_CURVE.map((p) => from + (to - from) * p);
-  const back = SPRING_CURVE.slice(1).map((p) => to + (from - to) * p);
-  return [...there, ...back].map(toKeyframe);
-}
-
-type TitleMotion = (area: HTMLElement, title: HTMLElement) => Keyframe[];
-
-const squeezeWidth: TitleMotion = () =>
-  springThereAndBack(1, 0.3, (scale) => ({ transform: `scaleX(${scale})` }));
-
-// Hovering the item plays the motion on its title once; hovering again while it
-// is still playing is ignored so the title never jumps mid-flight.
-function SpringTitleItem({
-  heading,
-  motion,
-  children,
-}: {
-  heading: string;
-  motion: TitleMotion;
-  children: ReactNode;
-}) {
-  const areaRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const animationRef = useRef<Animation>();
-
-  const play = () => {
-    const area = areaRef.current;
-    const title = titleRef.current;
-    if (!area || !title) return;
-    if (animationRef.current?.playState === "running") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const keyframes = motion(area, title);
-    animationRef.current = title.animate(keyframes, {
-      duration: (keyframes.length - 1) * SPRING_FRAME_MS,
-    });
-  };
-
-  useEffect(() => () => animationRef.current?.cancel(), []);
-
-  return (
-    <div ref={areaRef} onPointerEnter={play}>
-      <h3 css={itemTitleStyle}>
-        <span ref={titleRef} css={springTitleStyle}>
-          {heading}
-        </span>
-      </h3>
-      <p css={itemTextStyle}>{children}</p>
-    </div>
-  );
-}
-
-const FEATURES = [
-  {
-    icon: Layers,
-    title: "Unlimited timeline",
-    text: "Stack video, audio, text, and images across an unlimited number of layers, as far as the edit needs to go.",
-    image: "/cc-timeline.jpg",
-  },
-  {
-    icon: Sparkles,
-    title: "Advanced motion",
-    text: "Keyframes, easing, and transforms live in the timeline itself, so motion you would look for in After Effects stays one tool away.",
-    image: "/cc-motion.jpg",
-  },
-  {
-    icon: Puzzle,
-    title: "External extensions",
-    text: "The editor is built to be extended, so a missing capability is something you can write rather than wait for.",
-    image: "/cc-ext.jpg",
-  },
-];
 
 const FAQ_ITEMS = [
   {
@@ -869,193 +1636,206 @@ export function CartCut() {
     <div css={pageStyle}>
       <TopNavBar />
 
-      <div css={contentStyle}>
-        <img css={logoStyle} src="/cartcut.png" alt="CartCut" />
-
-        <p css={leadStyle}>
-          <b>Open Source Video Editor.</b> It is aimed at protecting the freedom
-          of creation and the rights of the creators. No subscription, no
-          watermark, no account. You download it, you own it, and the source is
-          yours to read and change.
-        </p>
-
-        <div css={actionsStyle}>
-          {/* A direct file link downloads in place; only the fallback, a
-              page, opens a tab. */}
-          <a
-            css={[buttonBaseStyle, primaryButtonStyle]}
-            href={macDownload?.url ?? DOWNLOAD_URL}
-            {...(macDownload ? {} : { target: "_blank", rel: "noreferrer" })}
-          >
-            <AppleIcon />
-            Download for macOS
-          </a>
-          <a
-            css={[buttonBaseStyle, secondaryButtonStyle]}
-            href={REPO_URL}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Github css={buttonIconStyle} />
-            View on GitHub
-          </a>
-          <Link
-            css={[buttonBaseStyle, secondaryButtonStyle]}
-            to="/cartcut/tutorial"
-          >
-            <BookOpen css={buttonIconStyle} />
-            Tutorial
-          </Link>
-        </div>
-
-        {latest && macDownload && (
-          <p css={downloadMetaStyle}>
-            v{latest.version} for Apple Silicon, {formatSize(macDownload.size)}
-            {latest.mac.x64 && (
-              <>
-                {" · "}
-                <a css={linkStyle} href={latest.mac.x64.url}>
-                  Intel Mac
-                </a>
-              </>
-            )}
-            {" · "}
+      <main css={mainStyle}>
+        <header css={heroStyle}>
+          <Reveal>
+            <h1 css={heroTitleStyle}>Open Source Video Editor</h1>
+          </Reveal>
+          <Reveal delay={120} css={heroActionsStyle}>
+            <DownloadButton download={macDownload} />
             <a
-              css={linkStyle}
-              href={latest.notesUrl}
+              css={[pillStyle, pillSecondaryStyle]}
+              href={REPO_URL}
               target="_blank"
               rel="noreferrer"
             >
-              Release notes
+              <img
+                css={pillIconStyle}
+                src="/images/cartcut/github.svg"
+                alt=""
+              />
+              View on GitHub
             </a>
-          </p>
-        )}
+          </Reveal>
+          <Reveal delay={260} css={heroShotStyle}>
+            <HeroShot />
+          </Reveal>
+        </header>
 
-        <iframe
-          css={videoStyle}
-          src="https://www.youtube.com/embed/AFZVSosNOUw?si=QTgA76zITTZGxTJV"
-          title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        ></iframe>
+        <section css={[sectionStyle, headingGapStyle]}>
+          <Reveal early>
+            <h2 css={[headingStyle, flowHeadingStyle]}>
+              <span>Cut</span>
+              <span css={visuallyHiddenStyle}> to </span>
+              <FlowArrow />
+              <ScatterWord word="Keyframe" start={300} />
+            </h2>
+          </Reveal>
+        </section>
+        <Reveal delay={120} css={{ width: "100%" }}>
+          <FlowCarousel />
+        </Reveal>
 
-        <div css={cardGridStyle}>
-          {FEATURES.map(({ icon: Icon, title, text, image }) => (
-            <div key={title} css={cardStyle}>
-              <img css={cardImageStyle} src={image} alt="" loading="lazy" />
-              <span css={cardIconWrapStyle}>
-                <Icon css={cardIconStyle} />
-              </span>
-              <h3 css={cardTitleStyle}>{title}</h3>
-              <p css={cardTextStyle}>{text}</p>
-            </div>
-          ))}
-        </div>
+        <section css={sectionStyle}>
+          <Reveal css={headingGapStyle}>
+            <h2 css={headingStyle}>AI Agent Edit</h2>
+          </Reveal>
+          <Reveal delay={120}>
+            <AgentDemo />
+          </Reveal>
+        </section>
 
-        <div css={itemListStyle}>
-          <GithubSpray>
-            <h3 css={itemTitleStyle}>Open source</h3>
-            <p css={itemTextStyle}>
-              The whole editor is public. Read it, fork it, ship a patch, or run
-              your own build.
-            </p>
-          </GithubSpray>
-          <div>
-            <h3 css={itemTitleStyle}>Easy editing</h3>
-            <p css={itemTextStyle}>
-              An easy yet free style of editing. The basics are where you
-              expect them, and nothing is locked behind a plan.
-            </p>
-          </div>
-          <SpringTitleItem heading="Lightweight" motion={squeezeWidth}>
-            A familiar and lightweight editor for smooth editing without
-            stumbling. It starts fast and stays out of the way.
-          </SpringTitleItem>
-          <div>
-            <h3 css={itemTitleStyle}>And more</h3>
-            <p css={itemTextStyle}>
-              Features keep arriving through open-source contribution. What the
-              community needs is what gets built next.
-            </p>
-          </div>
-        </div>
-
-        <section css={showcaseStyle}>
-          <div css={showcaseHeaderStyle}>
-            <h2 css={itemTitleStyle}>Made with CartCut</h2>
-            <Link css={viewMoreStyle} to={SHOWCASE_ROOT}>
-              View more
-              <ArrowRight css={viewMoreIconStyle} />
-            </Link>
-          </div>
+        <section css={sectionStyle}>
+          <Reveal css={headingGapStyle}>
+            <h2 css={headingStyle}>Made with CartCut</h2>
+          </Reveal>
           <div css={showcaseGridStyle}>
-            {SHOWCASE_VIDEOS.slice(0, SHOWCASE_TILE_COUNT).map((video) => (
-              <ShowcaseTile key={video.id} video={video} />
+            {SHOWCASE_VIDEOS.slice(0, SHOWCASE_TILE_COUNT).map(
+              (video, index) => (
+                <Reveal key={video.id} delay={(index % 2) * 120}>
+                  <ShowcaseTile video={video} />
+                </Reveal>
+              ),
+            )}
+          </div>
+        </section>
+
+        <SlamHeadline />
+
+        <section css={[sectionStyle, afterStageStyle]}>
+          <Reveal>
+            <a
+              css={demoCardStyle}
+              href={DEMO_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <h2 css={demoTitleStyle}>Try CartCut in your browser</h2>
+              <div css={demoActionStyle}>
+                <span
+                  data-demo-cta
+                  css={[pillStyle, pillPrimaryStyle]}
+                >
+                  Open the demo
+                  <ArrowUpRight css={pillIconStyle} strokeWidth={2.25} />
+                </span>
+              </div>
+              <div data-demo-browser css={browserStyle} aria-hidden="true">
+                <div css={browserBarStyle}>
+                  <span css={browserDotStyle} />
+                  <span css={browserDotStyle} />
+                  <span css={browserDotStyle} />
+                  <span css={browserUrlStyle}>cartcut.cartesiancs.com</span>
+                </div>
+                <img
+                  css={browserImageStyle}
+                  src="/images/cartcut/demo.webp"
+                  width={1800}
+                  height={1125}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </a>
+          </Reveal>
+        </section>
+
+        <section css={sectionStyle}>
+          <Reveal css={headingGapStyle}>
+            <h2 css={headingStyle}>Design for Freedom</h2>
+          </Reveal>
+          <div css={statGridStyle}>
+            {STATS.map(({ value, unit, label }, index) => (
+              <Reveal key={label} delay={index * 120}>
+                <div css={statCardStyle}>
+                  <p css={statValueStyle}>
+                    {value}
+                    {unit && <span css={statUnitStyle}>{unit}</span>}
+                  </p>
+                  <p css={statLabelStyle}>{label}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
-        <a
-          css={demoCardStyle}
-          href={DEMO_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Open the CartCut web demo"
-        >
-          <img
-            data-demo-image
-            css={demoImageStyle}
-            src="/images/cartcut.webp"
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <h2 css={demoTitleStyle}>Try CartCut in your browser</h2>
-          <div css={demoFooterStyle}>
-            <span data-demo-cta css={[buttonBaseStyle, primaryButtonStyle]}>
-              Open the demo
-              <ArrowUpRight
-                data-demo-arrow
-                css={[buttonIconStyle, demoArrowStyle]}
-              />
-            </span>
-          </div>
-        </a>
+        <section css={sectionStyle}>
+          <Reveal>
+            <h2 css={ultimateHeadingStyle}>
+              {ULTIMATE_LINES.map((line, index) => (
+                <UltimateLine key={line.text} line={line} index={index} />
+              ))}
+            </h2>
+          </Reveal>
+        </section>
 
-        <blockquote css={quoteStyle}>
-          I made this because I was pissed off that the free editing program
-          started charging for its services.
-          <span css={quoteNameStyle}>H. Jun Huh @ cartesiancs</span>
-        </blockquote>
-
-        <div css={faqListStyle}>
-          {FAQ_ITEMS.map((item, index) => {
-            const open = openIndex === index;
-            return (
-              <div key={item.question} css={faqItemStyle}>
-                <button
-                  type="button"
-                  css={faqQuestionStyle}
-                  aria-expanded={open}
-                  onClick={() => setOpenIndex(open ? null : index)}
+        <section css={[sectionStyle, finaleStyle]}>
+          <Reveal>
+            <p css={wordmarkStyle}>
+              cart<span css={wordmarkCutStyle}>cut</span>
+            </p>
+          </Reveal>
+          <Reveal delay={120} css={finaleActionsStyle}>
+            <DownloadButton download={macDownload} />
+            {latest && macDownload && (
+              <p css={downloadMetaStyle}>
+                <span>
+                  v{latest.version} for Apple Silicon,{" "}
+                  {formatSize(macDownload.size)}
+                </span>
+                {latest.mac.x64 && (
+                  <a css={metaLinkStyle} href={latest.mac.x64.url}>
+                    Intel Mac
+                  </a>
+                )}
+                <a
+                  css={metaLinkStyle}
+                  href={latest.notesUrl}
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  {item.question}
-                  <ChevronDown
-                    css={[faqChevronStyle, open && faqChevronOpenStyle]}
-                  />
-                </button>
-                <div css={[faqAnswerWrapStyle, open && faqAnswerWrapOpenStyle]}>
-                  <div css={faqAnswerStyle}>
-                    <p css={faqAnswerTextStyle}>{item.answer}</p>
+                  Release notes
+                </a>
+              </p>
+            )}
+          </Reveal>
+        </section>
+
+        <section css={[sectionStyle, faqSectionStyle]}>
+          <Reveal>
+            <h2 css={faqHeadingStyle}>Questions</h2>
+          </Reveal>
+          <Reveal delay={120}>
+            {FAQ_ITEMS.map((item, index) => {
+              const open = openIndex === index;
+              return (
+                <div key={item.question} css={faqItemStyle}>
+                  <button
+                    type="button"
+                    css={faqQuestionStyle}
+                    aria-expanded={open}
+                    onClick={() => setOpenIndex(open ? null : index)}
+                  >
+                    {item.question}
+                    <Plus
+                      css={[faqIconStyle, open && faqIconOpenStyle]}
+                      strokeWidth={2}
+                    />
+                  </button>
+                  <div
+                    css={[faqAnswerWrapStyle, open && faqAnswerWrapOpenStyle]}
+                  >
+                    <div css={faqAnswerStyle}>
+                      <p css={faqAnswerTextStyle}>{item.answer}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              );
+            })}
+          </Reveal>
+        </section>
+      </main>
 
       <Footer />
     </div>
