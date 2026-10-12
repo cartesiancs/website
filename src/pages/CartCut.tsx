@@ -938,8 +938,14 @@ const slamStageStyle = css({
   height: ["100vh", "100svh"],
   paddingInline: GUTTER,
   boxSizing: "border-box",
-  // A word starts several times its size; the stage crops it.
+  // A word starts several times its size, and cards drift up past the top;
+  // the stage crops both.
   overflow: "hidden",
+  // One card's side, shared by the grid and the scrim over it.
+  "--tile": "min(14.5vw, 22.4vh, 220px)",
+  "@media (max-width: 640px)": {
+    "--tile": "min(26vw, 15vh)",
+  },
   "@media (prefers-reduced-motion: reduce)": {
     position: "relative",
     height: "auto",
@@ -956,7 +962,6 @@ const slamHeadingStyle = css({
 // Five by three squares centered behind the words (three by five on phones),
 // sized to fit the screen either way.
 const slamGridStyle = css({
-  "--tile": "min(14.5vw, 22.4vh, 220px)",
   position: "absolute",
   top: "50%",
   left: "50%",
@@ -965,12 +970,24 @@ const slamGridStyle = css({
   gridAutoRows: "var(--tile)",
   gap: "calc(var(--tile) * 0.177)",
   transform: "translate(-50%, -50%)",
-  // The cards behind the words stay faint so the headline reads over them.
-  maskImage:
-    "radial-gradient(ellipse 52% 50% at center, rgba(0, 0, 0, 0.22) 40%, #000 100%)",
   "@media (max-width: 640px)": {
-    "--tile": "min(26vw, 15vh)",
     gridTemplateColumns: "repeat(3, var(--tile))",
+  },
+});
+
+// Keeps the cards behind the words faint so the headline reads over them. It
+// is a wash of the page color over the middle of the stage rather than a mask
+// on the grid, so cards drifting out of the grid are never clipped. The
+// ellipse spans the grid: about 5.7 by 3.4 cards, or 3.4 by 5.7 on phones.
+const slamScrimStyle = css({
+  position: "absolute",
+  inset: 0,
+  background:
+    "radial-gradient(ellipse calc(var(--tile) * 2.97) calc(var(--tile) * 1.68) at center, rgba(13, 14, 15, 0.78) 40%, rgba(13, 14, 15, 0) 100%)",
+  pointerEvents: "none",
+  "@media (max-width: 640px)": {
+    background:
+      "radial-gradient(ellipse calc(var(--tile) * 1.74) calc(var(--tile) * 2.85) at center, rgba(13, 14, 15, 0.78) 40%, rgba(13, 14, 15, 0) 100%)",
   },
 });
 
@@ -1083,16 +1100,24 @@ function slamFrame(t: number) {
   };
 }
 
+// How far each column of cards lifts per pixel scrolled once they are in, so
+// neighbours drift apart: some rise quickly, others barely. Phones show the
+// first three.
+const SLAM_COLUMN_LIFT = [0.05, 0.11, 0.025, 0.085, 0.06];
+
 function SlamHeadline() {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [tileRanks] = useState(() => randomRanks(SLAM_TILES.length));
 
   useEffect(() => {
     const track = trackRef.current;
     const stage = stageRef.current;
-    if (!track || !stage || prefersReducedMotion()) return;
+    const grid = gridRef.current;
+    if (!track || !stage || !grid || prefersReducedMotion()) return;
 
     let frame = 0;
     const update = () => {
@@ -1109,6 +1134,17 @@ function SlamHeadline() {
         word.style.opacity = String(opacity);
       });
       stage.dataset.filled = String(progress >= SLAM_FILL_AT);
+
+      // Counted from the moment the cards appear, so they arrive in the grid
+      // and only then spread; it keeps counting as the stage scrolls away.
+      const lifted = Math.max(0, -rect.top - SLAM_FILL_AT * pinned);
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(" ")
+        .length;
+      tileRefs.current.forEach((tile, index) => {
+        if (!tile) return;
+        const rate = SLAM_COLUMN_LIFT[index % columns];
+        tile.style.transform = `translate3d(0, ${-lifted * rate}px, 0)`;
+      });
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -1132,10 +1168,13 @@ function SlamHeadline() {
   return (
     <section ref={trackRef} css={slamTrackStyle}>
       <div ref={stageRef} css={slamStageStyle}>
-        <div css={slamGridStyle} aria-hidden="true">
+        <div ref={gridRef} css={slamGridStyle} aria-hidden="true">
           {SLAM_TILES.map((src, index) => (
             <div
               key={src}
+              ref={(node) => {
+                tileRefs.current[index] = node;
+              }}
               css={slamTileStyle}
               style={
                 { "--delay": `${tileRanks[index] * 35}ms` } as CSSProperties
@@ -1151,6 +1190,7 @@ function SlamHeadline() {
             </div>
           ))}
         </div>
+        <div css={slamScrimStyle} aria-hidden="true" />
         <h2 css={[headingStyle, slamHeadingStyle]}>
           {SLAM_WORDS.map((word, index) => (
             <Fragment key={word}>
