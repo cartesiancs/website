@@ -11,10 +11,13 @@ export type ShowcaseVideo = {
   preview: string;
   poster: string;
   seconds: number;
+  // Shown in the Made with CartCut tiles on the CartCut page; the showcase
+  // page lists every video.
+  featured?: boolean;
 };
 
-// Newest first; the CartCut page shows the first few and links here for the
-// rest.
+// Listed in this order on the showcase page. The CartCut page shows the
+// featured ones, in the same order, and links here for the rest.
 export const SHOWCASE_VIDEOS: ShowcaseVideo[] = [
   {
     id: "finding-things-out",
@@ -25,6 +28,18 @@ export const SHOWCASE_VIDEOS: ShowcaseVideo[] = [
     preview: "/videos/r1-preview.mp4",
     poster: "/videos/r1.jpg",
     seconds: 35,
+    featured: true,
+  },
+  {
+    id: "edit-by-asking",
+    title: "Edit by asking",
+    description:
+      "A teaser for editing with an AI agent: one prompt builds the cut, with titles, captions and grain on the beat, then restyles it in a few words.",
+    src: "/videos/r3.mp4",
+    preview: "/videos/r3-preview.mp4",
+    poster: "/videos/r3.jpg",
+    seconds: 95,
+    featured: true,
   },
   {
     id: "video-editing-rebuilt",

@@ -1730,7 +1730,9 @@ export function CartCut() {
             <h2 css={headingStyle}>Made with CartCut</h2>
           </Reveal>
           <div css={showcaseGridStyle}>
-            {SHOWCASE_VIDEOS.slice(0, SHOWCASE_TILE_COUNT).map(
+            {SHOWCASE_VIDEOS.filter((video) => video.featured)
+              .slice(0, SHOWCASE_TILE_COUNT)
+              .map(
               (video, index) => (
                 <Reveal key={video.id} delay={(index % 2) * 120}>
                   <ShowcaseTile video={video} />
