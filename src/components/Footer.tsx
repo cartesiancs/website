@@ -182,7 +182,7 @@ function Footer() {
             </a>
             <a
               css={linkStyle}
-              href="https://www.instagram.com/cartesiancs.official"
+              href="https://www.instagram.com/cartesinc"
               target="_blank"
               rel="noopener noreferrer"
             >
