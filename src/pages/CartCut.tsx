@@ -938,8 +938,7 @@ const slamStageStyle = css({
   height: ["100vh", "100svh"],
   paddingInline: GUTTER,
   boxSizing: "border-box",
-  // A word starts several times its size, and cards drift up past the top;
-  // the stage crops both.
+  // Cards drift up past the top; the stage crops them.
   overflow: "hidden",
   // One card's side, shared by the grid and the scrim over it.
   "--tile": "min(14.5vw, 22.4vh, 220px)",
@@ -1035,7 +1034,7 @@ const SLAM_TILES = [
   "media",
 ].map((name) => `/images/cartcut/grid/${name}.webp`);
 
-// Outlined while the words fall; filled once the last one has landed. The
+// Outlined while the words fade in; filled once the last one has settled. The
 // stroke is painted under a fill in the page color: variable fonts keep
 // overlapping contours, and a bare stroke would trace those inside the
 // letters. Half the stroke shows, hence the doubled width.
@@ -1061,42 +1060,26 @@ const afterStageStyle = css({
 });
 
 const SLAM_WORDS = ["All", "in", "one", "Platform"];
-const SLAM_FROM_SCALE = 7;
+const SLAM_FROM_SCALE = 1.15;
 // Each word takes this share of the pinned scroll, starting a step after the
-// one before; the last lands with room left to fill the words and bring in
+// one before; the last settles with room left to fill the words and bring in
 // the cards before the stage moves on.
 const SLAM_SPAN = 0.18;
 const SLAM_STEP = 0.14;
-// Words crash slightly past their size, then settle back up to it.
-const SLAM_RECOIL = 0.93;
-const SLAM_IMPACT_AT = 0.8;
-// The moment the last word hits, before its recoil.
-const SLAM_FILL_AT =
-  (SLAM_WORDS.length - 1) * SLAM_STEP + SLAM_SPAN * SLAM_IMPACT_AT;
+// The moment the last word settles.
+const SLAM_FILL_AT = (SLAM_WORDS.length - 1) * SLAM_STEP + SLAM_SPAN;
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
-// Where a word is at progress t through its own share of the scroll. It
-// lingers huge and accelerates into place (ease-in), dropping from slightly
-// above, then recoils (ease-out).
+// Where a word is at progress t through its own share of the scroll: it fades
+// in slightly enlarged and eases down to its size.
 function slamFrame(t: number) {
-  if (t < SLAM_IMPACT_AT) {
-    const a = t / SLAM_IMPACT_AT;
-    const fall = a * a * a;
-    return {
-      scale: SLAM_FROM_SCALE + (SLAM_RECOIL - SLAM_FROM_SCALE) * fall,
-      drop: -0.6 * (1 - fall),
-      opacity: clamp01(a / 0.3),
-    };
-  }
-  const b = (t - SLAM_IMPACT_AT) / (1 - SLAM_IMPACT_AT);
-  const settle = 1 - (1 - b) * (1 - b);
+  const settle = 1 - (1 - t) ** 3;
   return {
-    scale: SLAM_RECOIL + (1 - SLAM_RECOIL) * settle,
-    drop: 0,
-    opacity: 1,
+    scale: SLAM_FROM_SCALE + (1 - SLAM_FROM_SCALE) * settle,
+    opacity: clamp01(t / 0.6),
   };
 }
 
@@ -1127,10 +1110,10 @@ function SlamHeadline() {
       const progress = pinned > 0 ? clamp01(-rect.top / pinned) : 1;
       wordRefs.current.forEach((word, index) => {
         if (!word) return;
-        const { scale, drop, opacity } = slamFrame(
+        const { scale, opacity } = slamFrame(
           clamp01((progress - index * SLAM_STEP) / SLAM_SPAN),
         );
-        word.style.transform = `translateY(${drop}em) scale(${scale})`;
+        word.style.transform = `scale(${scale})`;
         word.style.opacity = String(opacity);
       });
       stage.dataset.filled = String(progress >= SLAM_FILL_AT);
