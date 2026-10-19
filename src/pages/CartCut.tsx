@@ -21,10 +21,7 @@ import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
-import {
-  ShowcaseTile,
-  usePlayInView,
-} from "../features/showcase/ShowcaseTile";
+import { ShowcaseTile, usePlayInView } from "../features/showcase/ShowcaseTile";
 import { SHOWCASE_VIDEOS } from "../features/showcase/videos";
 import { docPath, DOCS_ROOT } from "../features/tutorial/manifest";
 
@@ -142,9 +139,7 @@ function Reveal({
   delay?: number;
   early?: boolean;
 }) {
-  const [ref, shown] = useInView<HTMLDivElement>(
-    early ? "0px" : undefined,
-  );
+  const [ref, shown] = useInView<HTMLDivElement>(early ? "0px" : undefined);
   return (
     <div
       ref={ref}
@@ -648,25 +643,25 @@ const carouselButtonStyle = css({
 const FLOW_CARDS = [
   {
     title: "Freedom Cut Edit",
-    image: "/images/cartcut/cut.webp",
+    image: "/images/cartcut/cut.png",
     focus: "left top",
     slug: "cutting-and-trimming",
   },
   {
     title: "Keyframes",
-    image: "/images/cartcut/keyframe.webp",
+    image: "/images/cartcut/keyframe.png",
     focus: "center top",
     slug: "keyframes",
   },
   {
     title: "Effects & Transitions",
-    image: "/images/cartcut/effects.webp",
+    image: "/images/cartcut/effects.png",
     focus: "center top",
     slug: "effects-and-transitions",
   },
   {
     title: "Templates",
-    image: "/images/cartcut/templates.webp",
+    image: "/images/cartcut/templates.png",
     focus: "center",
     slug: "templates",
   },
@@ -1121,8 +1116,8 @@ function SlamHeadline() {
       // Counted from the moment the cards appear, so they arrive in the grid
       // and only then spread; it keeps counting as the stage scrolls away.
       const lifted = Math.max(0, -rect.top - SLAM_FILL_AT * pinned);
-      const columns = getComputedStyle(grid).gridTemplateColumns.split(" ")
-        .length;
+      const columns =
+        getComputedStyle(grid).gridTemplateColumns.split(" ").length;
       tileRefs.current.forEach((tile, index) => {
         if (!tile) return;
         const rate = SLAM_COLUMN_LIFT[index % columns];
@@ -1437,7 +1432,12 @@ const STROKE_START = "cubic-bezier(0.4, 0, 1, 1)";
 const STROKE_END = "cubic-bezier(0.3, 0.6, 0.4, 1)";
 
 // Timing for one piece of a line, given whether it leads the stroke.
-function strokeTiming(lead: boolean, start: number, leadMs: number, ms: number) {
+function strokeTiming(
+  lead: boolean,
+  start: number,
+  leadMs: number,
+  ms: number,
+) {
   return {
     transitionDuration: `${ms}ms`,
     transitionDelay: `${lead ? start : start + leadMs - 40}ms`,
@@ -1715,13 +1715,11 @@ export function CartCut() {
           <div css={showcaseGridStyle}>
             {SHOWCASE_VIDEOS.filter((video) => video.featured)
               .slice(0, SHOWCASE_TILE_COUNT)
-              .map(
-              (video, index) => (
+              .map((video, index) => (
                 <Reveal key={video.id} delay={(index % 2) * 120}>
                   <ShowcaseTile video={video} />
                 </Reveal>
-              ),
-            )}
+              ))}
           </div>
         </section>
 
@@ -1737,10 +1735,7 @@ export function CartCut() {
             >
               <h2 css={demoTitleStyle}>Try CartCut in your browser</h2>
               <div css={demoActionStyle}>
-                <span
-                  data-demo-cta
-                  css={[pillStyle, pillPrimaryStyle]}
-                >
+                <span data-demo-cta css={[pillStyle, pillPrimaryStyle]}>
                   Open the demo
                   <ArrowUpRight css={pillIconStyle} strokeWidth={2.25} />
                 </span>
