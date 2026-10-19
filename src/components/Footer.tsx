@@ -11,7 +11,7 @@ const footerStyle = css({
 });
 
 const innerStyle = css({
-  maxWidth: "1000px",
+  maxWidth: "1320px",
   margin: "0 auto",
   padding: "3rem 2rem 2rem 2rem",
   boxSizing: "border-box",
@@ -88,7 +88,7 @@ const linkStyle = css({
 });
 
 const bottomStyle = css({
-  maxWidth: "1000px",
+  maxWidth: "1320px",
   margin: "0 auto",
   padding: "1.5rem 2rem 2.5rem 2rem",
   boxSizing: "border-box",
