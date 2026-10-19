@@ -5,6 +5,7 @@ import { About } from "./pages/About";
 import { Product } from "./pages/Product";
 import { CartCut } from "./pages/CartCut";
 import ScrollToTop from "./components/ScrollToTop";
+import { PageCurtain } from "./components/PageTransition";
 import Post from "./pages/Post";
 import { Fleet } from "./pages/Fleet";
 import { Career } from "./pages/Career";
@@ -34,6 +35,7 @@ function App() {
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <PageCurtain />
       </BrowserRouter>
     </>
   );

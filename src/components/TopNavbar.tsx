@@ -6,8 +6,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { css } from "@emotion/react";
+import { css, keyframes } from "@emotion/react";
 import { ArrowRight } from "lucide-react";
+import { LEAVE_MS, usePageTransition } from "./PageTransition";
 
 const navBarStyle = css({
   position: "fixed",
@@ -95,6 +96,42 @@ const navItemStyle = css({
 
 const navItemActiveStyle = css({
   color: "#ffffff",
+});
+
+// The items drop in one after another when a page opens, and rise out the
+// same way when leaving for another page.
+const ITEM_ENTER_STAGGER_MS = 70;
+const ITEM_LEAVE_MS = 300;
+// Spread so the last item is gone right as the page changes.
+const ITEM_LEAVE_STAGGER_MS = (LEAVE_MS - ITEM_LEAVE_MS) / 3;
+
+const itemEnter = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+`;
+
+const itemLeave = keyframes`
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+`;
+
+const navItemEnterStyle = css({
+  animation: `${itemEnter} 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards`,
+  "@media (prefers-reduced-motion: reduce)": {
+    animation: "none",
+  },
+});
+
+const navItemLeaveStyle = css({
+  animation: `${itemLeave} ${ITEM_LEAVE_MS}ms ease-in forwards`,
+  pointerEvents: "none",
+  "@media (prefers-reduced-motion: reduce)": {
+    animation: "none",
+  },
 });
 
 const arrowIconStyle = css({
@@ -201,6 +238,8 @@ const TopNavBar = () => {
   const [revealed, setRevealed] = useState(false);
   const [panelOffset, setPanelOffset] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const transitionTo = usePageTransition();
   const lastScrollY = useRef(0);
   const barRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -312,6 +351,15 @@ const TopNavBar = () => {
     if (!visible) setOpenMenu(null);
   }, [visible]);
 
+  const goTo = (link: string) => {
+    if (leaving) return;
+    setOpenMenu(null);
+    setLeaving(true);
+    // The next page brings its own nav bar, so this only matters when the
+    // bar stays mounted (same page): the items drop back in.
+    transitionTo(link, () => setLeaving(false));
+  };
+
   return (
     <div
       ref={barRef}
@@ -325,7 +373,7 @@ const TopNavBar = () => {
       }}
     >
       <div css={navListStyle}>
-        {navItems.map((item) => (
+        {navItems.map((item, index) => (
           <div
             key={item.name}
             ref={(node) => {
@@ -334,7 +382,13 @@ const TopNavBar = () => {
             css={[
               navItemStyle,
               openMenu === item.name && navItemActiveStyle,
+              leaving ? navItemLeaveStyle : navItemEnterStyle,
             ]}
+            style={{
+              animationDelay: `${
+                index * (leaving ? ITEM_LEAVE_STAGGER_MS : ITEM_ENTER_STAGGER_MS)
+              }ms`,
+            }}
             onMouseEnter={() => {
               if (!isMobile) setOpenMenu(item.items ? item.name : null);
             }}
@@ -345,7 +399,7 @@ const TopNavBar = () => {
                 setOpenMenu(openMenu === item.name ? null : item.name);
                 return;
               }
-              if (item.link) window.location.href = item.link;
+              if (item.link) goTo(item.link);
             }}
           >
             {item.name}
@@ -372,6 +426,17 @@ const TopNavBar = () => {
                 rel={link.external ? "noreferrer" : undefined}
                 tabIndex={openMenu ? 0 : -1}
                 aria-hidden={!openMenu}
+                onClick={(event) => {
+                  // Modified clicks still open a new tab as usual.
+                  const modified =
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey;
+                  if (link.external || modified) return;
+                  event.preventDefault();
+                  goTo(link.link);
+                }}
               >
                 {link.name}
               </a>
