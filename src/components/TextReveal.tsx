@@ -10,7 +10,7 @@ import {
 import { css, keyframes } from "@emotion/react";
 
 // Time between one word starting to appear and the next.
-const STEP_MS = 12;
+const STEP_MS = 4;
 
 // Only the starting frame is defined, so each word settles on its own
 // styles and the finished page looks exactly as it would without the effect.
@@ -22,7 +22,7 @@ const writeIn = keyframes`
 `;
 
 const pieceStyle = css({
-  animation: `${writeIn} 0.9s ease-out backwards`,
+  animation: `${writeIn} 0.6s ease-out backwards`,
   "@media (prefers-reduced-motion: reduce)": {
     animation: "none",
   },
