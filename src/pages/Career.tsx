@@ -30,6 +30,7 @@ const titleStyle = css({
   fontWeight: 600,
   letterSpacing: "-0.03em",
   color: "#ffffff",
+  marginBottom: "2rem",
 });
 
 const introStyle = css({
@@ -106,7 +107,6 @@ export function Career() {
 
       <div css={contentStyle}>
         <h1 css={titleStyle}>Careers</h1>
-        <p css={introStyle}>We hire on a rolling basis.</p>
 
         <ul css={listStyle}>
           <li>

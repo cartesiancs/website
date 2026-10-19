@@ -112,9 +112,6 @@ function Footer() {
         <div css={brandStyle}>
           <span css={brandNameStyle}>cartesiancs</span>
           <p css={brandTextStyle}>to explore strange new worlds.</p>
-          <a css={linkStyle} href="mailto:info@cartesiancs.com">
-            info@cartesiancs.com
-          </a>
         </div>
 
         <div css={columnsStyle}>
@@ -131,6 +128,9 @@ function Footer() {
             </a>
             <a css={linkStyle} href="/career">
               Career
+            </a>
+            <a css={linkStyle} href="mailto:info@cartesiancs.com">
+              Contact
             </a>
           </div>
 
