@@ -68,10 +68,8 @@ const columnStyle = css({
 
 const columnTitleStyle = css({
   margin: 0,
-  fontSize: "0.75rem",
+  fontSize: "0.7rem",
   fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
   color: "#8a8a8f",
   marginBottom: "0.25rem",
 });
@@ -82,6 +80,7 @@ const linkStyle = css({
   color: "#bfbfc7",
   textDecoration: "none",
   transition: "color 0.3s ease",
+  marginBottom: "0.2rem",
   ":hover": {
     color: "#ffffff",
   },
