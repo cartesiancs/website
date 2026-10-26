@@ -1,35 +1,98 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { ArrowRight } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
 
+const SCRIPT_FONT = '"Playball", "Snell Roundhand", cursive';
+
+type ProductItem = {
+  name: string;
+  // Internal routes start with "/"; anything else opens in a new tab.
+  href: string;
+  video?: string;
+  image?: string;
+};
+
+const PRODUCTS: ProductItem[] = [
+  { name: "Landlink", href: "https://landlink.sh/", video: "/v-landlink.mp4" },
+  { name: "CartCut", href: "/cartcut", image: "/i-nugget.webp" },
+  {
+    name: "Map3d",
+    href: "https://github.com/cartesiancs/map3d",
+    image: "/i-map3d.webp",
+  },
+];
+
 const pageStyle = css({
   width: "100%",
+  minHeight: "100%",
+  display: "flex",
+  flexDirection: "column",
 });
 
-// Stills are filled with background-image instead of <img> so a missing asset
-// falls back to the dark background rather than a broken image.
-const sectionStyle = css({
-  position: "relative",
+const mainStyle = css({
+  flex: 1,
   width: "100%",
-  height: "100vh",
-  // On mobile, 100vh measures the viewport with the browser chrome retracted,
-  // so the bottom of the section sits behind the address bar. svh is the
-  // height with the chrome shown, which stays exact as the bar collapses.
-  "@supports (height: 100svh)": {
-    height: "100svh",
+  // 1342px card row plus the side padding.
+  maxWidth: "calc(1342px + 4rem)",
+  margin: "0 auto",
+  padding: "7.5rem 2rem 8rem",
+  boxSizing: "border-box",
+  "@media (max-width: 600px)": {
+    padding: "4.5rem 1rem 5rem",
   },
-  overflow: "hidden",
-  backgroundColor: "#0d0e0f",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat",
 });
 
-const videoStyle = css({
+const titleStyle = css({
+  margin: 0,
+  fontFamily: SCRIPT_FONT,
+  fontWeight: 400,
+  fontSize: "clamp(3.5rem, 14vw, 6rem)",
+  lineHeight: 1.25,
+  color: "#ffffff",
+  textAlign: "center",
+});
+
+const gridStyle = css({
+  marginTop: "5.75rem",
+  display: "grid",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gap: "clamp(1.25rem, 3.5vw, 3.3rem)",
+  "@media (max-width: 900px)": {
+    gridTemplateColumns: "minmax(0, 1fr)",
+    maxWidth: "460px",
+    margin: "3rem auto 0",
+  },
+});
+
+const cardStyle = css({
+  position: "relative",
+  display: "block",
+  aspectRatio: "412 / 423",
+  borderRadius: "34px",
+  border: "3px solid #2e2f34",
+  backgroundColor: "#101012",
+  overflow: "hidden",
+  textDecoration: "none",
+  // Keeps the rounded corners clipping the media in Safari while it scales.
+  isolation: "isolate",
+  transition: "border-color 0.3s ease",
+  ":hover, :focus-visible": {
+    borderColor: "#4a4b52",
+  },
+  ":hover .product-media, :focus-visible .product-media": {
+    transform: "scale(1.04)",
+  },
+  ":focus-visible": {
+    outline: "2px solid #d9dae1",
+    outlineOffset: "3px",
+  },
+});
+
+const mediaStyle = css({
   position: "absolute",
   inset: 0,
   width: "100%",
@@ -37,123 +100,98 @@ const videoStyle = css({
   objectFit: "cover",
   objectPosition: "center",
   display: "block",
+  transition: "transform 0.6s ease",
+  "@media (prefers-reduced-motion: reduce)": {
+    transition: "none",
+  },
+});
+
+// Stills are filled with background-image instead of <img> so a missing asset
+// falls back to the dark card rather than a broken image.
+const stillStyle = css({
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
 });
 
 const overlayStyle = css({
   position: "absolute",
   inset: 0,
   background:
-    "linear-gradient(to top, rgba(13, 14, 15, 0.92) 0%, rgba(13, 14, 15, 0.45) 35%, rgba(13, 14, 15, 0.1) 65%, rgba(13, 14, 15, 0.35) 100%)",
+    "linear-gradient(to top, rgba(16, 16, 18, 0.85) 0%, rgba(16, 16, 18, 0.35) 35%, rgba(16, 16, 18, 0) 60%)",
 });
 
-const captionStyle = css({
+const nameStyle = css({
   position: "absolute",
-  left: "4rem",
-  bottom: "4rem",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  gap: "0.75rem",
-  "@media (max-width: 600px)": {
-    left: "1.5rem",
-    bottom: "2.5rem",
-  },
-});
-
-const titleStyle = css({
+  left: "40px",
+  bottom: "40px",
   margin: 0,
-  fontSize: "clamp(2.75rem, 9vw, 7rem)",
-  fontWeight: 600,
-  lineHeight: 1.05,
-  letterSpacing: "-0.03em",
-  color: "#ffffff",
-});
-
-const linkStyle = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "0.35rem",
-  fontSize: "1.1rem",
-  color: "#bfbfc7",
-  textDecoration: "none",
-  transition: "color 0.3s ease",
-  ":hover": {
-    color: "#ffffff",
-  },
-  ":hover svg": {
-    transform: "translateX(4px)",
-  },
-  "@media (max-width: 600px)": {
-    fontSize: "1rem",
+  fontSize: "clamp(1.75rem, 2.7vw, 2.5rem)",
+  fontWeight: 800,
+  lineHeight: 1.2,
+  color: "#d9dae1",
+  "@media (max-width: 900px)": {
+    left: "32px",
+    bottom: "32px",
+    fontSize: "2rem",
   },
 });
 
-const linkIconStyle = css({
-  width: "18px",
-  height: "18px",
-  transition: "transform 0.3s ease",
-});
-
-export function Product() {
+function CardLink({ href, children }: { href: string; children: ReactNode }) {
+  if (href.startsWith("/")) {
+    return (
+      <Link css={cardStyle} to={href}>
+        {children}
+      </Link>
+    );
+  }
   return (
-    <div css={pageStyle}>
-      <TopNavBar />
+    <a css={cardStyle} href={href} target="_blank" rel="noreferrer">
+      {children}
+    </a>
+  );
+}
 
-      <section css={sectionStyle}>
+function ProductCard({ item }: { item: ProductItem }) {
+  return (
+    <CardLink href={item.href}>
+      {item.video ? (
         <video
-          css={videoStyle}
-          src="/v-landlink.mp4"
+          className="product-media"
+          css={mediaStyle}
+          src={item.video}
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
         />
-        <div css={overlayStyle} />
-        <div css={captionStyle}>
-          <h2 css={titleStyle}>Landlink</h2>
-          <a
-            css={linkStyle}
-            href="https://landlink.sh/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Visit
-            <ArrowRight css={linkIconStyle} />
-          </a>
-        </div>
-      </section>
+      ) : (
+        <div
+          className="product-media"
+          css={[mediaStyle, stillStyle]}
+          style={{ backgroundImage: `url("${item.image}")` }}
+        />
+      )}
+      <div css={overlayStyle} />
+      <h2 css={nameStyle}>{item.name}</h2>
+    </CardLink>
+  );
+}
 
-      <section
-        css={[sectionStyle, css({ backgroundImage: 'url("/i-nugget.webp")' })]}
-      >
-        <div css={overlayStyle} />
-        <div css={captionStyle}>
-          <h2 css={titleStyle}>CartCut</h2>
-          <Link css={linkStyle} to="/cartcut">
-            Visit
-            <ArrowRight css={linkIconStyle} />
-          </Link>
-        </div>
-      </section>
+export function Product() {
+  return (
+    <div css={pageStyle}>
+      <TopNavBar />
 
-      <section
-        css={[sectionStyle, css({ backgroundImage: 'url("/i-map3d.webp")' })]}
-      >
-        <div css={overlayStyle} />
-        <div css={captionStyle}>
-          <h2 css={titleStyle}>Map3d</h2>
-          <a
-            css={linkStyle}
-            href="https://github.com/cartesiancs/map3d"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Visit
-            <ArrowRight css={linkIconStyle} />
-          </a>
+      <main css={mainStyle}>
+        <h1 css={titleStyle}>Products</h1>
+        <div css={gridStyle}>
+          {PRODUCTS.map((item) => (
+            <ProductCard key={item.name} item={item} />
+          ))}
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>

@@ -6,6 +6,24 @@ import Footer from "../components/Footer";
 import { SpeakButton } from "../components/SpeakButton";
 import { TextReveal } from "../components/TextReveal";
 
+const SCRIPT_FONT = '"Playball", "Snell Roundhand", cursive';
+
+// The wordmark centered above the page copy.
+const heroStyle = css({
+  margin: 0,
+  paddingTop: "5.5rem",
+  fontFamily: SCRIPT_FONT,
+  fontWeight: 400,
+  fontSize: "clamp(3.5rem, 14vw, 6rem)",
+  lineHeight: 1.25,
+  color: "#ffffff",
+  textAlign: "center",
+  whiteSpace: "nowrap",
+  "@media (max-width: 600px)": {
+    paddingTop: "3.5rem",
+  },
+});
+
 // The page copy. Edit it like plain HTML: <h1>, <h3>, <p>, <strong>, <em>,
 // <code>, <a> and <img> all work. Everything in here fades in word by word.
 // A line that ends right before a tag needs {" "} to keep the space between
@@ -13,8 +31,6 @@ import { TextReveal } from "../components/TextReveal";
 function AboutText() {
   return (
     <TextReveal>
-      <h1>cartesiancs</h1>
-
       <p>
         cartesiancs ( pronounced: <code>/kɑːrˈtiːʒəns/</code>{" "}
         <SpeakButton src="/speak.mp3" />, Korean: <code>카르테시안스</code>)
@@ -118,6 +134,10 @@ export function About() {
         })}
       >
         <TopNavBar />
+
+        <h1 css={heroStyle}>
+          <TextReveal>cartesiancs</TextReveal>
+        </h1>
 
         {/* Same column as the markdown pages (see MarkdownContent). */}
         <div
