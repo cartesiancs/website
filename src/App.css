@@ -1,40 +1,46 @@
+/* The site's own element rules live in the lowest layer so the Tailwind layers
+   used by the Vessel pages (src/vessel/vessel.css) can sit above them. */
+@layer properties, site, theme, base, components, utilities;
+
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
-html,
-body {
-  margin: 0;
-  height: 100%;
-  width: 100%;
-  font-family: "Pretendard Variable", Pretendard, -apple-system,
-    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
-    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-  background-color: #0d0e0f;
-  color: #ffffff;
-  touch-action: pan-y;
-  overflow-x: hidden;
-  -ms-overflow-style: none;
-}
+@layer site {
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    font-family: "Pretendard Variable", Pretendard, -apple-system,
+      BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+      "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji",
+      "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    background-color: #0d0e0f;
+    color: #ffffff;
+    touch-action: pan-y;
+    overflow-x: hidden;
+    -ms-overflow-style: none;
+  }
 
-::-webkit-scrollbar {
-  display: none;
-}
+  ::-webkit-scrollbar {
+    display: none;
+  }
 
-#root {
-  width: 100%;
-  height: 100%;
-}
+  #root {
+    width: 100%;
+    height: 100%;
+  }
 
-p {
-  line-height: 1.6rem;
-  font-weight: 200;
-  color: #e6e6eb;
-}
+  p {
+    line-height: 1.6rem;
+    font-weight: 200;
+    color: #e6e6eb;
+  }
 
-a {
-  color: #e6e6eb;
-}
+  a {
+    color: #e6e6eb;
+  }
 
-img {
-  width: 100%;
+  img {
+    width: 100%;
+  }
 }

@@ -1,4 +1,5 @@
 /** @jsxImportSource @emotion/react */
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import "./App.css";
 import { About } from "./pages/About";
@@ -15,6 +16,10 @@ import { Tutorial } from "./pages/Tutorial";
 import { Showcase } from "./pages/Showcase";
 import { VesselDocs } from "./pages/VesselDocs";
 
+// The Vessel site brings Tailwind, Supabase and three.js with it, so it is
+// only downloaded when someone opens a /vessel page.
+const VesselApp = lazy(() => import("./vessel/VesselApp"));
+
 function App() {
   return (
     <>
@@ -29,6 +34,14 @@ function App() {
           <Route path="/cartcut/showcase" element={<Showcase />} />
           <Route path="/vessel/docs" element={<VesselDocs />} />
           <Route path="/vessel/docs/:slug" element={<VesselDocs />} />
+          <Route
+            path="/vessel/*"
+            element={
+              <Suspense fallback={null}>
+                <VesselApp />
+              </Suspense>
+            }
+          />
           <Route path="/posts/:slug" element={<Post />} />
           <Route path="/fleet" element={<Fleet />} />
           <Route path="/career" element={<Career />} />
