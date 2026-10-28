@@ -7,12 +7,9 @@ import {
   navigationMenuTriggerStyle,
 } from "@/vessel/components/ui/navigation-menu";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "@/vessel/contexts/AuthContext";
-
 
 export function Navbar() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
   const openInNewTab = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -63,17 +60,6 @@ export function Navbar() {
               >
                 Docs
               </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              {!loading && (
-                <NavigationMenuLink
-                  className={`${navigationMenuTriggerStyle()} bg-transparent`}
-                  onClick={() => navigate(user ? "/vessel/dashboard" : "/vessel/login")}
-                  style={{ cursor: "pointer" }}
-                >
-                  {user ? "Dashboard" : "Sign In"}
-                </NavigationMenuLink>
-              )}
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>

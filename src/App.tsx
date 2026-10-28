@@ -16,7 +16,7 @@ import { Tutorial } from "./pages/Tutorial";
 import { Showcase } from "./pages/Showcase";
 import { VesselDocs } from "./pages/VesselDocs";
 
-// The Vessel site brings Tailwind, Supabase and three.js with it, so it is
+// The Vessel site brings Tailwind and three.js with it, so it is
 // only downloaded when someone opens a /vessel page.
 const VesselApp = lazy(() => import("./vessel/VesselApp"));
 
