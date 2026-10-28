@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, Route, Routes } from "react-router";
-import { Toaster } from "sonner";
 import "./vessel.css";
-import { AuthProvider } from "@/vessel/contexts/AuthContext";
 import { loadVesselAnalytics } from "@/vessel/lib/analytics";
 import LandingPage from "@/vessel/pages/Main";
 import RoadmapPage from "@/vessel/pages/Roadmap";
@@ -10,9 +8,6 @@ import UsecasePage from "@/vessel/pages/UseCase";
 import { PrivacyPage } from "@/vessel/pages/Privacy";
 import PrivacyPolicyPage from "@/vessel/pages/PrivacyPolicy";
 import PricingPage from "@/vessel/pages/Pricing";
-import LoginPage from "@/vessel/pages/Login";
-import DashboardPage from "@/vessel/pages/Dashboard";
-import CheckoutSuccessPage from "@/vessel/pages/CheckoutSuccess";
 import CapsulePage from "@/vessel/pages/Capsule";
 import ContactPage from "@/vessel/pages/Contact";
 import TermsPage from "@/vessel/pages/Terms";
@@ -51,12 +46,9 @@ function VesselLayout() {
   }, []);
 
   return (
-    <AuthProvider>
-      <div className='vessel-scope vessel-root'>
-        <Outlet />
-        <Toaster />
-      </div>
-    </AuthProvider>
+    <div className='vessel-scope vessel-root'>
+      <Outlet />
+    </div>
   );
 }
 
@@ -70,9 +62,6 @@ export default function VesselApp() {
         <Route path='privacy' element={<PrivacyPage />} />
         <Route path='privacy-policy' element={<PrivacyPolicyPage />} />
         <Route path='pricing' element={<PricingPage />} />
-        <Route path='login' element={<LoginPage />} />
-        <Route path='dashboard' element={<DashboardPage />} />
-        <Route path='checkout/success' element={<CheckoutSuccessPage />} />
         <Route path='capsule' element={<CapsulePage />} />
         <Route path='contact' element={<ContactPage />} />
         <Route path='terms' element={<TermsPage />} />

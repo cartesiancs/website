@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
 import { Navbar } from "@/vessel/components/Navbar";
 import { Footer } from "@/vessel/components/Footer";
 import {
@@ -10,10 +8,7 @@ import {
   CardTitle,
 } from "@/vessel/components/ui/card";
 import { Button } from "@/vessel/components/ui/button";
-import { Check, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@/vessel/contexts/AuthContext";
-import { supabase } from "@/vessel/lib/supabase";
+import { Check } from "lucide-react";
 
 const proFeatures = [
   "Remote Tunnel",
@@ -40,80 +35,6 @@ const enterpriseHighlights = [
 ];
 
 function PricingPage() {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-
-  useEffect(() => {
-    const checkSubscription = async () => {
-      if (!user) return;
-
-      try {
-        const { data } = await supabase
-          .from("billing_subscriptions")
-          .select("status")
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .limit(1)
-          .maybeSingle();
-
-        setIsSubscribed(!!data);
-      } catch (err) {
-        console.error("Error checking subscription:", err);
-      }
-    };
-
-    if (!authLoading) {
-      checkSubscription();
-    }
-  }, [user, authLoading]);
-
-  const handleProCheckout = async () => {
-    if (authLoading) return;
-
-    if (!user) {
-      toast.error("Please sign in to subscribe");
-      navigate("/vessel/login");
-      return;
-    }
-
-    const productId = import.meta.env.VITE_POLAR_PRO_PRODUCT_ID;
-    if (!productId) {
-      toast.error("Product configuration is missing");
-      return;
-    }
-
-    setCheckoutLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "create-checkout-session",
-        {
-          body: { productId },
-        }
-      );
-
-      if (error) {
-        toast.error(error.message || "Failed to create checkout session");
-        return;
-      }
-
-      const url = data?.url as string | undefined;
-      if (!url) {
-        toast.error("Failed to get checkout URL");
-        return;
-      }
-
-      window.location.assign(url);
-    } catch (err) {
-      toast.error("An unexpected error occurred");
-      console.error("Checkout error:", err);
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
   return (
     <>
       <Navbar />
@@ -195,19 +116,12 @@ function PricingPage() {
               <CardFooter className="mt-auto">
                 <Button
                   className="h-11 w-full text-base"
-                  onClick={handleProCheckout}
-                  disabled={checkoutLoading || authLoading || isSubscribed}
+                  onClick={() => {
+                    window.location.href =
+                      "mailto:info@cartesiancs.com?subject=Vessel%20Pro";
+                  }}
                 >
-                  {checkoutLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Redirecting...
-                    </>
-                  ) : isSubscribed ? (
-                    "Already subscribed"
-                  ) : (
-                    "Continue with Pro"
-                  )}
+                  Email us for Pro
                 </Button>
               </CardFooter>
             </Card>
