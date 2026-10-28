@@ -2,24 +2,14 @@ import type { Lang } from "./manifest";
 
 const STRINGS = {
   docs: { en: "Docs", ko: "문서" },
-  tutorial: { en: "Tutorial", ko: "튜토리얼" },
   search: { en: "Search docs", ko: "문서 검색" },
-  search_placeholder: {
-    en: "Search the tutorial...",
-    ko: "튜토리얼 검색...",
-  },
   search_empty: { en: "No results for", ko: "검색 결과가 없습니다:" },
-  search_hint: {
-    en: "Type to search every page of the tutorial.",
-    ko: "튜토리얼의 모든 페이지에서 검색합니다.",
-  },
   search_loading: { en: "Loading...", ko: "불러오는 중..." },
   on_this_page: { en: "On this page", ko: "이 페이지의 내용" },
   previous: { en: "Previous", ko: "이전" },
   next: { en: "Next", ko: "다음" },
   menu: { en: "Menu", ko: "메뉴" },
   close: { en: "Close", ko: "닫기" },
-  download: { en: "Download", ko: "다운로드" },
   copy: { en: "Copy", ko: "복사" },
   copied: { en: "Copied", ko: "복사됨" },
   code: { en: "Code", ko: "코드" },
@@ -40,10 +30,6 @@ const STRINGS = {
     ko: "틀리거나 빠진 내용이 있나요?",
   },
   open_issue: { en: "Open an issue on GitHub", ko: "GitHub에 이슈 남기기" },
-  sample_credit: {
-    en: "Sample footage in the screenshots: Sintel and Big Buck Bunny (CC BY, Blender Foundation), volcano footage (CC0, Wikimedia Commons).",
-    ko: "스크린샷의 예제 영상: Sintel, Big Buck Bunny (CC BY, Blender Foundation), 화산 영상 (CC0, Wikimedia Commons).",
-  },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

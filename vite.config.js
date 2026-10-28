@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 export default defineConfig({
     plugins: [
@@ -9,6 +10,8 @@ export default defineConfig({
                 plugins: ["@emotion/babel-plugin"],
             },
         }),
+        // Only the Vessel pages use Tailwind; see src/vessel/vessel.css.
+        tailwindcss(),
     ],
     resolve: {
         alias: {
