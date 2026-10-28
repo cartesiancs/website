@@ -4,7 +4,7 @@ import { css } from "@emotion/react";
 import { CornerDownLeft, FileText, Hash, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { loadSearchIndex, type SearchSection } from "./content";
-import { docPath, type Lang } from "./manifest";
+import { docPath, text, type DocsSite, type Lang } from "./manifest";
 import { ui } from "./strings";
 
 const overlayStyle = css({
@@ -182,7 +182,15 @@ function Snippet({ text, query }: { text: string; query: string }) {
   );
 }
 
-export function SearchDialog({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+export function SearchDialog({
+  site,
+  lang,
+  onClose,
+}: {
+  site: DocsSite;
+  lang: Lang;
+  onClose: () => void;
+}) {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -193,11 +201,11 @@ export function SearchDialog({ lang, onClose }: { lang: Lang; onClose: () => voi
   useEffect(() => {
     inputRef.current?.focus();
     let alive = true;
-    loadSearchIndex(lang).then((sections) => alive && setIndex(sections));
+    loadSearchIndex(site, lang).then((sections) => alive && setIndex(sections));
     return () => {
       alive = false;
     };
-  }, [lang]);
+  }, [site, lang]);
 
   const results = useMemo(() => (index ? rank(index, query) : []), [index, query]);
 
@@ -210,7 +218,7 @@ export function SearchDialog({ lang, onClose }: { lang: Lang; onClose: () => voi
   }, [active]);
 
   const open = (result: Result) => {
-    navigate(`${docPath(result.slug)}${result.anchor ? `#${result.anchor}` : ""}`);
+    navigate(`${docPath(site, result.slug)}${result.anchor ? `#${result.anchor}` : ""}`);
     onClose();
   };
 
@@ -244,7 +252,7 @@ export function SearchDialog({ lang, onClose }: { lang: Lang; onClose: () => voi
             ref={inputRef}
             css={inputStyle}
             value={query}
-            placeholder={ui(lang, "search_placeholder")}
+            placeholder={text(site.searchPlaceholder, lang)}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onKeyDown}
             aria-label={ui(lang, "search")}
@@ -253,7 +261,7 @@ export function SearchDialog({ lang, onClose }: { lang: Lang; onClose: () => voi
         </div>
         <div css={listStyle} ref={listRef}>
           {!query.trim() ? (
-            <div css={emptyStyle}>{ui(lang, "search_hint")}</div>
+            <div css={emptyStyle}>{text(site.searchHint, lang)}</div>
           ) : !index ? (
             <div css={emptyStyle}>{ui(lang, "search_loading")}</div>
           ) : results.length === 0 ? (

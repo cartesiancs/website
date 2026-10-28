@@ -11,7 +11,7 @@ import {
   Info,
   Lightbulb,
 } from "lucide-react";
-import { docPath, type Lang } from "./manifest";
+import { docPath, type DocsSite, type Lang } from "./manifest";
 import { ui } from "./strings";
 
 export type Heading = { id: string; text: string; depth: number };
@@ -19,6 +19,7 @@ export type Heading = { id: string; text: string; depth: number };
 export type ImageSizes = Record<string, [number, number]>;
 
 type RenderContext = {
+  site: DocsSite;
   lang: Lang;
   // Pixel sizes of the page's screenshots, keyed by file name.
   sizes: ImageSizes;
@@ -554,7 +555,7 @@ function SmartLink({
   // Anything else is another page of these docs: `slug` or `slug#anchor`.
   const [slug, hash] = href.replace(/^\.\//, "").split("#");
   return (
-    <Link css={style} to={`${docPath(slug)}${hash ? `#${hash}` : ""}`}>
+    <Link css={style} to={`${docPath(ctx.site, slug)}${hash ? `#${hash}` : ""}`}>
       {children}
     </Link>
   );
@@ -850,18 +851,20 @@ function renderBlock(token: Token, ctx: RenderContext, key: string): ReactNode {
 }
 
 export function DocMarkdown({
+  site,
   tokens,
   lang,
   base,
   sizes,
   onZoom,
 }: {
+  site: DocsSite;
   tokens: Token[];
   lang: Lang;
   base: string;
   sizes: ImageSizes;
   onZoom: (src: string, alt: string) => void;
 }) {
-  const ctx: RenderContext = { lang, base, sizes, onZoom, ids: new Map() };
+  const ctx: RenderContext = { site, lang, base, sizes, onZoom, ids: new Map() };
   return <div css={proseStyle}>{renderBlocks(tokens, ctx)}</div>;
 }

@@ -23,7 +23,8 @@ import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
 import { ShowcaseTile, usePlayInView } from "../features/showcase/ShowcaseTile";
 import { SHOWCASE_VIDEOS } from "../features/showcase/videos";
-import { docPath, DOCS_ROOT } from "../features/tutorial/manifest";
+import { docPath } from "../features/docs/manifest";
+import { CARTCUT_DOCS } from "../features/docs/sites";
 
 const DOWNLOAD_URL = "https://github.com/cartesiancs/cartcut/releases";
 const REPO_URL = "https://github.com/cartesiancs/cartcut";
@@ -378,7 +379,7 @@ function HeroShot() {
       <div css={heroOverlayStyle}>
         <Link
           css={[pillStyle, pillPrimaryStyle, heroTutorialStyle]}
-          to={DOCS_ROOT}
+          to={CARTCUT_DOCS.root}
         >
           View Tutorial
         </Link>
@@ -704,7 +705,7 @@ function FlowCarousel() {
         <ul css={trackStyle}>
           {FLOW_CARDS.map(({ title, image, focus, slug }) => (
             <li key={title} css={flowCardStyle}>
-              <Link css={flowLinkStyle} to={docPath(slug)}>
+              <Link css={flowLinkStyle} to={docPath(CARTCUT_DOCS, slug)}>
                 <img
                   css={flowImageStyle}
                   style={{ objectPosition: focus }}

@@ -1,6 +1,6 @@
 import type { Token } from "marked";
 import { extractHeadings, lex, plainText, type Heading, type ImageSizes } from "./markdown";
-import { PAGES, sourceFolder, type Lang } from "./manifest";
+import { sourceFolder, text, type DocsSite, type Lang } from "./manifest";
 
 export type LoadedDoc = {
   tokens: Token[];
@@ -16,11 +16,15 @@ function looksLikeHtml(text: string) {
   return head.startsWith("<!doctype") || head.startsWith("<html");
 }
 
-export function loadDoc(lang: Lang, slug: string): Promise<LoadedDoc | null> {
-  const key = `${lang}/${slug}`;
+export function loadDoc(
+  site: DocsSite,
+  lang: Lang,
+  slug: string,
+): Promise<LoadedDoc | null> {
+  const key = `${site.id}/${lang}/${slug}`;
   let pending = cache.get(key);
   if (!pending) {
-    pending = fetch(`${sourceFolder(lang)}/${slug}.md`)
+    pending = fetch(`${sourceFolder(site, lang)}/${slug}.md`)
       .then((res) => (res.ok ? res.text() : null))
       .then((text) => {
         if (text === null || looksLikeHtml(text)) return null;
@@ -37,16 +41,17 @@ export function loadDoc(lang: Lang, slug: string): Promise<LoadedDoc | null> {
   return pending;
 }
 
-const sizeCache = new Map<Lang, Promise<ImageSizes>>();
+const sizeCache = new Map<string, Promise<ImageSizes>>();
 
 // Optional: without it images still show, just without reserved space.
-export function loadImageSizes(lang: Lang): Promise<ImageSizes> {
-  let pending = sizeCache.get(lang);
+export function loadImageSizes(site: DocsSite, lang: Lang): Promise<ImageSizes> {
+  const key = `${site.id}/${lang}`;
+  let pending = sizeCache.get(key);
   if (!pending) {
-    pending = fetch(`${sourceFolder(lang)}/img/sizes.json`)
+    pending = fetch(`${sourceFolder(site, lang)}/img/sizes.json`)
       .then((res) => (res.ok ? res.json() : {}))
       .catch(() => ({}));
-    sizeCache.set(lang, pending);
+    sizeCache.set(key, pending);
   }
   return pending;
 }
@@ -87,13 +92,16 @@ function blockText(token: Token): string {
   }
 }
 
-export async function loadSearchIndex(lang: Lang): Promise<SearchSection[]> {
-  const docs = await Promise.all(PAGES.map((p) => loadDoc(lang, p.slug)));
+export async function loadSearchIndex(
+  site: DocsSite,
+  lang: Lang,
+): Promise<SearchSection[]> {
+  const docs = await Promise.all(site.pages.map((p) => loadDoc(site, lang, p.slug)));
   const sections: SearchSection[] = [];
   docs.forEach((doc, index) => {
     if (!doc) return;
-    const page = PAGES[index];
-    const pageTitle = page.title[lang];
+    const page = site.pages[index];
+    const pageTitle = text(page.title, lang);
     let headingIndex = 0;
     let current: SearchSection = {
       slug: page.slug,
