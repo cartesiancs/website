@@ -207,7 +207,6 @@ type NavItem = {
 const productItems: DropdownLink[] = [
   { name: "Landlink", link: "https://landlink.sh/", external: true },
   { name: "CartCut", link: "/cartcut" },
-  { name: "Vessel", link: "/vessel" },
   {
     name: "Map3d",
     link: "https://github.com/cartesiancs/map3d",
