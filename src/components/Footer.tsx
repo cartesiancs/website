@@ -128,6 +128,9 @@ function Footer() {
             <a css={linkStyle} href="/career">
               Career
             </a>
+            <a css={linkStyle} href="/sponsors">
+              Sponsors
+            </a>
             <a css={linkStyle} href="mailto:info@cartesiancs.com">
               Contact
             </a>

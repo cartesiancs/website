@@ -15,6 +15,7 @@ import { NotFound } from "./pages/NotFound";
 import { Tutorial } from "./pages/Tutorial";
 import { Showcase } from "./pages/Showcase";
 import { VesselDocs } from "./pages/VesselDocs";
+import { Sponsors } from "./pages/Sponsors";
 
 // The Vessel site brings Tailwind and three.js with it, so it is
 // only downloaded when someone opens a /vessel page.
@@ -45,6 +46,7 @@ function App() {
           <Route path="/posts/:slug" element={<Post />} />
           <Route path="/fleet" element={<Fleet />} />
           <Route path="/career" element={<Career />} />
+          <Route path="/sponsors" element={<Sponsors />} />
           <Route
             path="/career/product-engineer"
             element={<CareerProductEngineer />}
