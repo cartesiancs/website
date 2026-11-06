@@ -15,8 +15,13 @@ export type Sponsor = {
 // The Hall of Fame on /sponsors. Sponsors are listed here for good, so add
 // each new one at the end and never remove anyone, even after they stop
 // sponsoring. Their place in this list is the number shown next to them.
-// Only add sponsors who sponsored publicly, or who said yes to being named.
+// Only name sponsors who sponsored publicly, or who said yes to being named;
+// list everyone else as "Anonymous".
 //
 // Example:
 //   { name: "Ada Lovelace", github: "ada", url: "https://ada.dev", since: "2026-11" },
-export const HALL_OF_FAME: Sponsor[] = [];
+export const HALL_OF_FAME: Sponsor[] = [
+  { name: "Anonymous", since: "2026-09" },
+  { name: "Anonymous", since: "2026-10" },
+  { name: "Anonymous", since: "2026-10" },
+];
