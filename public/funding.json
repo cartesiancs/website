@@ -1,0 +1,121 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "owner",
+    "name": "Hyeong Jun Huh",
+    "email": "info@cartesiancs.com",
+    "description": "Hyeong Jun Huh is an independent developer in South Korea and the founder and maintainer of cartesiancs (https://github.com/cartesiancs), an open source organisation he started in 2020. cartesiancs builds free tools that let one person do work that used to need an institution: turning OpenStreetMap data into 3D city models (map3d) and editing video with AI agents (CartCut). The projects are developed in the open under OSI-approved licenses. Before working on cartesiancs full time he was a founding engineer at a Y Combinator (W25) startup. Grants pay for maintainer time and for the infrastructure the projects run on. Funds are received by Hyeong Jun Huh, who holds a Korean bank account and can provide Korean tax residency documents.",
+    "webpageUrl": {
+      "url": "https://cartesiancs.com"
+    }
+  },
+  "projects": [
+    {
+      "guid": "map3d",
+      "name": "map3d",
+      "description": "map3d turns any area of OpenStreetMap into a 3D city model in the browser. Users select an area on a map, map3d fetches buildings and roads from OpenStreetMap, builds the scene with React Three Fiber, and exports a GLB file for Blender, Unity, Unreal or three.js. It is free, needs no account, and runs at https://map.fleet.im.\n\nUsage (GitHub, 7 Nov 2026): 2,682 stars and 434 forks. About 2,350 of those stars came in the last 12 months, and around 200 still arrive each month. In the last 14 days the repository had 857 unique visitors, with Google as the top referrer. Issue reports come from users mapping cities in Africa and the Middle East.\n\nWhat funding sustains:\n1) Stop leaning on volunteer infrastructure. map3d queries the public Overpass API and the OSM standard tile servers directly from the browser. We will run our own Overpass instance and cache tiles, as the Overpass and OSMF tile policies ask of apps that serve more than OSM mappers.\n2) Global coverage. Fix failures for cities in Africa and the Middle East, missing roads, and buildings exported as plain boxes.\n3) Finish the open roadmap: terrain (heightmap), height overrides, textures and materials.\n4) Exporter and docs: import guides for common 3D tools, OSM attribution embedded in exported files, tests and regular releases.\n\nLicense: MIT. Map data (c) OpenStreetMap contributors, ODbL.",
+      "webpageUrl": {
+        "url": "https://map.fleet.im",
+        "wellKnown": "https://map.fleet.im/.well-known/funding-manifest-urls"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/cartesiancs/map3d",
+        "wellKnown": "https://github.com/cartesiancs/map3d/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": [
+        "spdx:MIT"
+      ],
+      "tags": [
+        "maps",
+        "3d-modeling",
+        "graphics",
+        "data-visualization",
+        "web-development",
+        "openstreetmap",
+        "gis",
+        "threejs"
+      ]
+    },
+    {
+      "guid": "cartcut",
+      "name": "CartCut",
+      "description": "CartCut is an open source desktop video editor built so that AI coding agents can edit video through the Model Context Protocol (MCP) while a person reviews and finishes the work on a normal timeline. It runs locally on top of FFmpeg, keeps media on the user's machine, and ships as a notarised macOS app with plugins for agent tools.\n\nUsage (GitHub, 7 Nov 2026): 826 stars, 79 forks, more than 1,000 commits since 2022 (first released as 'nugget'), 12 releases between 9 Sep and 27 Oct 2026, and about 1,200 downloads of release installers and update packages. Open issues ask for Linux support and report Windows export bugs.\n\nWhat funding sustains:\n1) Cross-platform. Fix Windows path and export bugs and ship Linux builds, so the editor is not macOS-only.\n2) Release infrastructure. Apple notarisation and Windows code signing, and CI that tests all three platforms.\n3) Agent interoperability. Keep the MCP server working across Claude Code, Codex, Gemini CLI and other MCP clients, with a public test suite.\n4) Documentation and accessibility. English and Korean tutorials and accessibility fixes in the editor.\n\nLicense: MIT.",
+      "webpageUrl": {
+        "url": "https://cartesiancs.com/cartcut"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/cartesiancs/cartcut",
+        "wellKnown": "https://github.com/cartesiancs/cartcut/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": [
+        "spdx:MIT"
+      ],
+      "tags": [
+        "multimedia",
+        "video",
+        "developer-tools",
+        "artificial-intelligence",
+        "productivity",
+        "mcp",
+        "ffmpeg",
+        "desktop"
+      ]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "bank",
+        "type": "bank",
+        "address": "International wire (SWIFT) to a Korean bank account. Details shared on request.",
+        "description": "Account holder: Hyeong Jun Huh. Account and SWIFT details are shared privately during grant paperwork and are not published in this file."
+      },
+      {
+        "guid": "github-sponsors",
+        "type": "payment-provider",
+        "address": "https://github.com/sponsors/cartesiancs",
+        "description": "Recurring or one-time sponsorship through GitHub Sponsors."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "map3d-sustain",
+        "status": "active",
+        "name": "map3d: infrastructure and maintenance (12 months)",
+        "description": "Budget in USD: own Overpass instance, tile caching and hosting 3,000; global coverage and data-robustness fixes 9,000; terrain, height overrides and textures 7,000; exporter, OSM attribution, docs and tests 4,000; releases and issue triage 2,000.",
+        "amount": 25000,
+        "currency": "USD",
+        "frequency": "yearly",
+        "channels": [
+          "bank"
+        ]
+      },
+      {
+        "guid": "cartcut-sustain",
+        "status": "active",
+        "name": "CartCut: cross-platform and release infrastructure (12 months)",
+        "description": "Budget in USD: Windows fixes and Linux builds 4,000; Apple and Windows code-signing and three-platform CI 1,500; MCP interoperability test suite 2,500; documentation and accessibility 2,000.",
+        "amount": 10000,
+        "currency": "USD",
+        "frequency": "yearly",
+        "channels": [
+          "bank"
+        ]
+      },
+      {
+        "guid": "community",
+        "status": "active",
+        "name": "Community sponsorship",
+        "description": "Any amount, at any time, for general maintenance of cartesiancs projects.",
+        "amount": 0,
+        "currency": "USD",
+        "frequency": "monthly",
+        "channels": [
+          "github-sponsors"
+        ]
+      }
+    ]
+  }
+}
