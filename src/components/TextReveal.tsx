@@ -66,7 +66,14 @@ function reveal(node: ReactNode, next: () => number): ReactNode {
 }
 
 // Fades its text in word by word, as if it were being written out.
-export function TextReveal({ children }: { children: ReactNode }) {
+// delayMs holds the first word back, e.g. until a hero above has come in.
+export function TextReveal({
+  children,
+  delayMs = 0,
+}: {
+  children: ReactNode;
+  delayMs?: number;
+}) {
   let index = 0;
-  return <>{reveal(children, () => index++ * STEP_MS)}</>;
+  return <>{reveal(children, () => delayMs + index++ * STEP_MS)}</>;
 }
