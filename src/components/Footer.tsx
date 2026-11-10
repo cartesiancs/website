@@ -1,201 +1,280 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import type { ReactNode } from "react";
+import {
+  FaGithub,
+  FaInstagram,
+  FaLinkedinIn,
+  FaXTwitter,
+  FaYoutube,
+} from "react-icons/fa6";
+
+const BORDER = "rgb(36, 36, 43)";
+const MUTED = "#8a8a8f";
+const TEXT = "#e6e6eb";
 
 const footerStyle = css({
   width: "100%",
-  borderTop: "1px solid rgb(36, 36, 43)",
-
   backgroundColor: "#0d0e0f",
-  color: "#e6e6eb",
-  marginTop: "0rem",
+  color: TEXT,
+  borderTop: `1px solid ${BORDER}`,
+  // Clips the full-width divider line below.
+  overflow: "hidden",
 });
 
-const innerStyle = css({
-  maxWidth: "1320px",
+const frameStyle = css({
+  position: "relative",
+  maxWidth: "1024px",
   margin: "0 auto",
-  padding: "3rem 2rem 2rem 2rem",
   boxSizing: "border-box",
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  gap: "3rem",
-  flexWrap: "wrap",
-  "@media (max-width: 640px)": {
-    padding: "2.5rem 1.5rem 1.5rem 1.5rem",
-    gap: "2rem",
+  background:
+    "radial-gradient(35% 80% at 15% 0%, rgba(255, 255, 255, 0.1), transparent)",
+  "@media (min-width: 1024px)": {
+    borderLeft: `1px solid ${BORDER}`,
+    borderRight: `1px solid ${BORDER}`,
   },
 });
 
+const gridStyle = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+  gap: "1.5rem",
+  padding: "1rem",
+});
+
 const brandStyle = css({
+  gridColumn: "span 6",
   display: "flex",
   flexDirection: "column",
-  alignItems: "flex-start",
-  gap: "0.5rem",
-  minWidth: "200px",
+  gap: "1rem",
+  paddingTop: "1.25rem",
+  "@media (min-width: 768px)": {
+    gridColumn: "span 4",
+  },
 });
 
 const brandNameStyle = css({
+  width: "max-content",
   fontSize: "1.1rem",
+  lineHeight: "1.25rem",
   fontWeight: 600,
-  color: "#ffffff",
   letterSpacing: "-0.01em",
+  color: "#ffffff",
+  textDecoration: "none",
 });
 
 const brandTextStyle = css({
   margin: 0,
-  fontSize: "0.85rem",
-  lineHeight: 1.5,
-  color: "#8a8a8f",
+  maxWidth: "24rem",
+  fontSize: "0.875rem",
+  lineHeight: "1.25rem",
+  fontWeight: 400,
+  color: MUTED,
+  textWrap: "balance",
 });
 
-const columnsStyle = css({
+const socialRowStyle = css({
   display: "flex",
-  flexDirection: "row",
-  gap: "3rem",
   flexWrap: "wrap",
-  "@media (max-width: 640px)": {
-    gap: "2rem",
+  gap: "0.5rem",
+});
+
+const socialButtonStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "2.25rem",
+  height: "2.25rem",
+  boxSizing: "border-box",
+  borderRadius: "0.5rem",
+  border: "1px solid rgba(255, 255, 255, 0.15)",
+  backgroundColor: "rgba(255, 255, 255, 0.045)",
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  color: TEXT,
+  transition: "background-color 0.2s ease, color 0.2s ease",
+  svg: {
+    width: "1rem",
+    height: "1rem",
+  },
+  ":hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    color: "#ffffff",
+  },
+  ":focus-visible": {
+    outline: "none",
+    borderColor: "#737373",
+    boxShadow: "0 0 0 3px rgba(115, 115, 115, 0.5)",
   },
 });
 
 const columnStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  gap: "0.6rem",
-  minWidth: "120px",
+  gridColumn: "span 3",
+  width: "100%",
+  "@media (min-width: 768px)": {
+    gridColumn: "span 1",
+  },
 });
 
 const columnTitleStyle = css({
+  display: "block",
   margin: 0,
-  fontSize: "0.7rem",
-  fontWeight: 600,
-  color: "#8a8a8f",
-  marginBottom: "0.25rem",
+  fontSize: "0.75rem",
+  lineHeight: "1rem",
+  fontWeight: 400,
+  color: MUTED,
+});
+
+const linkListStyle = css({
+  marginTop: "0.5rem",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.5rem",
 });
 
 const linkStyle = css({
-  fontSize: "0.9rem",
-  fontWeight: 400,
-  color: "#bfbfc7",
+  width: "max-content",
+  fontSize: "0.875rem",
+  lineHeight: "1.25rem",
+  color: TEXT,
   textDecoration: "none",
-  transition: "color 0.3s ease",
-  marginBottom: "0.2rem",
   ":hover": {
-    color: "#ffffff",
+    textDecoration: "underline",
+  },
+});
+
+// A 1px line that runs past the frame's side borders to both screen edges.
+const dividerStyle = css({
+  position: "relative",
+  height: "1px",
+  "::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: "50%",
+    width: "100vw",
+    height: "1px",
+    transform: "translateX(-50%)",
+    backgroundColor: BORDER,
   },
 });
 
 const bottomStyle = css({
-  maxWidth: "1320px",
-  margin: "0 auto",
-  padding: "1.5rem 2rem 2.5rem 2rem",
-  boxSizing: "border-box",
   display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
   alignItems: "center",
-  gap: "1rem",
-  flexWrap: "wrap",
-  fontSize: "0.8rem",
-  color: "#8a8a8f",
-  "@media (max-width: 640px)": {
-    padding: "1.5rem",
-  },
+  justifyContent: "center",
+  gap: "0.5rem",
+  padding: "1rem 0",
 });
+
+const copyrightStyle = css({
+  margin: 0,
+  textAlign: "center",
+  fontSize: "0.875rem",
+  lineHeight: "1.25rem",
+  fontWeight: 300,
+  color: MUTED,
+});
+
+type FooterLink = {
+  title: string;
+  href: string;
+  external?: boolean;
+};
+
+const company: FooterLink[] = [
+  { title: "About", href: "/" },
+  { title: "Product", href: "/product" },
+  { title: "Fleet", href: "/fleet" },
+  { title: "Career", href: "/career" },
+  { title: "Sponsors", href: "/sponsors" },
+  { title: "Contact", href: "mailto:info@cartesiancs.com" },
+];
+
+const writing: FooterLink[] = [
+  { title: "Blog", href: "https://blog.cartesiancs.com/", external: true },
+];
+
+const columns = [
+  { title: "Company", links: company },
+  { title: "Writing", links: writing },
+];
+
+const socialLinks: { title: string; href: string; icon: ReactNode }[] = [
+  { title: "GitHub", href: "https://github.com/cartesiancs", icon: <FaGithub /> },
+  {
+    title: "LinkedIn",
+    href: "https://www.linkedin.com/company/cartesiancs",
+    icon: <FaLinkedinIn />,
+  },
+  { title: "X", href: "https://x.com/cartesiancs", icon: <FaXTwitter /> },
+  {
+    title: "YouTube",
+    href: "https://www.youtube.com/@cartesiancs",
+    icon: <FaYoutube />,
+  },
+  {
+    title: "Instagram",
+    href: "https://www.instagram.com/cartesinc",
+    icon: <FaInstagram />,
+  },
+];
 
 function Footer() {
   return (
     <footer css={footerStyle}>
-      <div css={innerStyle}>
-        <div css={brandStyle}>
-          <span css={brandNameStyle}>cartesiancs</span>
-          <p css={brandTextStyle}>to explore strange new worlds.</p>
+      <div css={frameStyle}>
+        <div css={gridStyle}>
+          <div css={brandStyle}>
+            <a css={brandNameStyle} href="/">
+              cartesiancs
+            </a>
+            <p css={brandTextStyle}>to explore strange new worlds.</p>
+            <div css={socialRowStyle}>
+              {socialLinks.map(({ title, href, icon }) => (
+                <a
+                  key={title}
+                  css={socialButtonStyle}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={title}
+                  title={title}
+                >
+                  {icon}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {columns.map(({ title, links }) => (
+            <div key={title} css={columnStyle}>
+              <span css={columnTitleStyle}>{title}</span>
+              <div css={linkListStyle}>
+                {links.map((link) => (
+                  <a
+                    key={link.title}
+                    css={linkStyle}
+                    href={link.href}
+                    {...(link.external && {
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                    })}
+                  >
+                    {link.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div css={columnsStyle}>
-          <div css={columnStyle}>
-            <h3 css={columnTitleStyle}>Company</h3>
-            <a css={linkStyle} href="/">
-              About
-            </a>
-            <a css={linkStyle} href="/product">
-              Product
-            </a>
-            <a css={linkStyle} href="/fleet">
-              Fleet
-            </a>
-            <a css={linkStyle} href="/career">
-              Career
-            </a>
-            <a css={linkStyle} href="/sponsors">
-              Sponsors
-            </a>
-            <a css={linkStyle} href="mailto:info@cartesiancs.com">
-              Contact
-            </a>
-          </div>
+        <div css={dividerStyle} aria-hidden="true" />
 
-          <div css={columnStyle}>
-            <h3 css={columnTitleStyle}>Writing</h3>
-            <a
-              css={linkStyle}
-              href="https://blog.cartesiancs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Blog
-            </a>
-          </div>
-
-          <div css={columnStyle}>
-            <h3 css={columnTitleStyle}>Social</h3>
-            <a
-              css={linkStyle}
-              href="https://github.com/cartesiancs"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
-            </a>
-            <a
-              css={linkStyle}
-              href="https://www.linkedin.com/company/cartesiancs"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LinkedIn
-            </a>
-            <a
-              css={linkStyle}
-              href="https://x.com/cartesiancs"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              X
-            </a>
-            <a
-              css={linkStyle}
-              href="https://www.youtube.com/@cartesiancs"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              YouTube
-            </a>
-            <a
-              css={linkStyle}
-              href="https://www.instagram.com/cartesinc"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Instagram
-            </a>
-          </div>
+        <div css={bottomStyle}>
+          <p css={copyrightStyle}>
+            &copy; {new Date().getFullYear()} cartesiancs
+          </p>
         </div>
-      </div>
-
-      <div css={bottomStyle}>
-        <span>&copy; {new Date().getFullYear()} cartesiancs</span>
       </div>
     </footer>
   );
