@@ -7,17 +7,19 @@ import { FrameLines } from "../components/FrameLines";
 import {
   MONO,
   MUTED,
-  SERIF,
   ServerSignature,
   SiteLink,
   TypedTitle,
+  articleStyle,
   frameColumnStyle,
   headerStyle,
+  headingStyle,
   hrStyle,
   iconCellStyle,
   linkStyle,
   mainStyle,
   pageStyle,
+  proseStyle,
   typed,
   useTyping,
 } from "../components/EarlyWeb";
@@ -55,13 +57,6 @@ const SECTIONS: [string, string[]][] = [
   ],
 ];
 
-const articleStyle = css({
-  paddingBottom: 0,
-  "@media (max-width: 640px)": {
-    paddingBottom: 0,
-  },
-});
-
 const upStyle = css({
   margin: "0 0 1.25rem",
   fontFamily: MONO,
@@ -87,37 +82,8 @@ const metaStyle = css({
   },
 });
 
-// Plain document text, as a browser set it before stylesheets.
 const bodyStyle = css({
-  maxWidth: "40rem",
   padding: "0.75rem 0 0.5rem",
-  fontFamily: SERIF,
-  fontSize: "1.125rem",
-  lineHeight: 1.55,
-  color: "#d4d4dc",
-  p: {
-    margin: "0 0 1rem",
-    fontWeight: 400,
-    lineHeight: 1.55,
-    color: "inherit",
-  },
-  h2: {
-    margin: "2rem 0 0.5rem",
-    fontSize: "1.375rem",
-    fontWeight: 700,
-    lineHeight: 1.2,
-    color: "#ffffff",
-  },
-  ul: {
-    margin: 0,
-    paddingLeft: "1.25rem",
-  },
-  li: {
-    marginBottom: "0.25rem",
-  },
-  "li::marker": {
-    color: MUTED,
-  },
 });
 
 const signatureStyle = css({
@@ -168,7 +134,7 @@ export function CareerProductEngineer() {
           </p>
           <hr css={[hrStyle, topRule.css]} style={topRule.style} />
 
-          <div css={bodyStyle}>
+          <div css={[proseStyle, bodyStyle]}>
             <p css={summary.css} style={summary.style}>
               You will work on landlink, a communication network individuals
               run themselves over LoRa. Engineers here own an area from decision
@@ -177,7 +143,7 @@ export function CareerProductEngineer() {
 
             {sections.map(({ title, items, heading, list }) => (
               <section key={title}>
-                <h2 css={heading.css} style={heading.style}>
+                <h2 css={[headingStyle, heading.css]} style={heading.style}>
                   {title}
                 </h2>
                 <ul css={list.css} style={list.style}>
@@ -188,7 +154,10 @@ export function CareerProductEngineer() {
               </section>
             ))}
 
-            <h2 css={applyHeading.css} style={applyHeading.style}>
+            <h2
+              css={[headingStyle, applyHeading.css]}
+              style={applyHeading.style}
+            >
               Apply
             </h2>
             <p css={applyText.css} style={applyText.style}>

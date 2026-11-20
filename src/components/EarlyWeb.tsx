@@ -105,6 +105,87 @@ export const linkStyle = css({
   },
 });
 
+// The page body below a header that runs straight into the signature, with
+// no bottom padding of its own.
+export const articleStyle = css({
+  paddingBottom: 0,
+  "@media (max-width: 640px)": {
+    paddingBottom: 0,
+  },
+});
+
+// Plain document text, as a browser set it before stylesheets.
+export const proseStyle = css({
+  maxWidth: "40rem",
+  fontFamily: SERIF,
+  fontSize: "1.125rem",
+  lineHeight: 1.55,
+  color: "#d4d4dc",
+  p: {
+    margin: "0 0 1rem",
+    fontWeight: 400,
+    lineHeight: 1.55,
+    color: "inherit",
+  },
+  strong: {
+    fontWeight: 700,
+    color: "#ffffff",
+  },
+  ul: {
+    margin: 0,
+    paddingLeft: "1.25rem",
+  },
+  li: {
+    marginBottom: "0.25rem",
+  },
+  "li::marker": {
+    color: MUTED,
+  },
+});
+
+// A section heading in the default bold Times.
+export const headingStyle = css({
+  margin: "2rem 0 0.5rem",
+  fontFamily: SERIF,
+  fontSize: "1.375rem",
+  fontWeight: 700,
+  lineHeight: 1.2,
+  color: "#ffffff",
+});
+
+// A raised grey form button with bevelled edges; pressed, the bevel flips.
+export const buttonStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.45rem 1rem 0.5rem",
+  fontFamily: 'Tahoma, Verdana, "Segoe UI", sans-serif',
+  fontSize: "0.8125rem",
+  lineHeight: 1.2,
+  color: "#0d0e0f",
+  backgroundColor: "#c6c6cc",
+  textDecoration: "none",
+  boxShadow:
+    "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #7b7b82, inset 2px 2px #e4e4e8",
+  svg: {
+    width: "14px",
+    height: "14px",
+  },
+  ":hover": {
+    backgroundColor: "#d2d2d7",
+  },
+  ":active": {
+    boxShadow:
+      "inset -1px -1px #ffffff, inset 1px 1px #0a0a0a, inset -2px -2px #e4e4e8, inset 2px 2px #7b7b82",
+    paddingTop: "0.5rem",
+    paddingBottom: "0.45rem",
+  },
+  ":focus-visible": {
+    outline: "1px dotted #0d0e0f",
+    outlineOffset: "-5px",
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Typing
 
