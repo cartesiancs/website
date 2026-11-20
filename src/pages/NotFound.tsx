@@ -29,7 +29,7 @@ const mainStyle = css({
   },
 });
 
-// Matches the Playball page titles on About and Products.
+// Matches the Playball page title on Products.
 const titleStyle = css({
   margin: "0 0 3.5rem 0",
   fontFamily: SCRIPT_FONT,

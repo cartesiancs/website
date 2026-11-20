@@ -27,8 +27,6 @@ const frameStyle = css({
   maxWidth: "1024px",
   margin: "0 auto",
   boxSizing: "border-box",
-  background:
-    "radial-gradient(35% 80% at 15% 0%, rgba(255, 255, 255, 0.1), transparent)",
   "@media (min-width: 1024px)": {
     borderLeft: `1px solid ${BORDER}`,
     borderRight: `1px solid ${BORDER}`,
