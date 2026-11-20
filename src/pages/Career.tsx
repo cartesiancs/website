@@ -1,125 +1,154 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
+import { FrameLines } from "../components/FrameLines";
+import {
+  ServerSignature,
+  SiteLink,
+  TypedTitle,
+  frameColumnStyle,
+  headerStyle,
+  hrStyle,
+  iconCellStyle,
+  linkStyle,
+  listingHeadStyle,
+  listingRowStyle,
+  listingStyle,
+  mainStyle,
+  pageStyle,
+  typed,
+  useTyping,
+} from "../components/EarlyWeb";
 
-const pageStyle = css({
-  display: "flex",
-  minHeight: "100%",
-  width: "100%",
-  flexDirection: "column",
-  alignItems: "center",
-});
+// A bare directory listing of the open positions, in the same early web
+// dress as the Product page but without the pictures.
 
-const contentStyle = css({
-  width: "100%",
-  maxWidth: "720px",
-  padding: "8rem 2rem 20rem 2rem",
-  boxSizing: "border-box",
+type Role = {
+  // The role's page is /career/<slug>.
+  slug: string;
+  team: string;
+  type: string;
+  location: string;
+};
+
+const ROLES: Role[] = [
+  {
+    slug: "product-engineer",
+    team: "Engineering",
+    type: "Full-time",
+    location: "Remote",
+  },
+];
+
+const TITLE = "Index of /career";
+
+// Name, Team, Type, Location; team and type drop out on narrow screens.
+const listingColumnsStyle = css({
+  gridTemplateColumns: "5ch 18ch 12ch 10ch minmax(0, 1fr)",
   "@media (max-width: 640px)": {
-    padding: "7rem 1.5rem 6rem 1.5rem",
+    gridTemplateColumns: "5ch 18ch minmax(0, 1fr)",
   },
 });
 
-const titleStyle = css({
-  margin: 0,
-  fontSize: "clamp(2rem, 5vw, 2.75rem)",
-  fontWeight: 600,
-  letterSpacing: "-0.03em",
-  color: "#ffffff",
-  marginBottom: "2rem",
-});
-
-const introStyle = css({
-  marginTop: "1rem",
-  marginBottom: 0,
-  fontSize: "1rem",
-  lineHeight: 1.7,
-  color: "#8a8a8f",
-  fontWeight: 200,
-});
-
-const listTitleStyle = css({
-  margin: "3.5rem 0 1rem 0",
-  fontSize: "0.75rem",
-  fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "#8a8a8f",
-});
-
-const listStyle = css({
-  listStyle: "none",
-  margin: 0,
-  padding: 0,
-  borderTop: "1px solid rgb(36, 36, 43)",
-});
-
-const rowStyle = css({
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "1rem",
-  padding: "1.5rem 0.5rem",
-  borderBottom: "1px solid rgb(36, 36, 43)",
-  textDecoration: "none",
-  transition: "background-color 0.3s ease, padding-left 0.3s ease",
-  ":hover": {
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
-    paddingLeft: "1rem",
-  },
-  ":hover svg": {
-    opacity: 1,
-    transform: "translateX(0)",
+// The signature sits right under the listing, as on an Apache index.
+const listingHeaderStyle = css({
+  paddingBottom: 0,
+  "@media (max-width: 640px)": {
+    paddingBottom: 0,
   },
 });
 
-const rowNameStyle = css({
-  fontSize: "1.15rem",
-  fontWeight: 500,
-  color: "#ffffff",
-});
-
-const rowMetaStyle = css({
-  marginTop: "0.3rem",
-  fontSize: "0.85rem",
-  color: "#8a8a8f",
-});
-
-const rowIconStyle = css({
-  width: "18px",
-  height: "18px",
-  flexShrink: 0,
-  color: "#bfbfc7",
-  opacity: 0,
-  transform: "translateX(-5px)",
-  transition: "opacity 0.3s ease, transform 0.3s ease",
+const signatureStyle = css({
+  paddingTop: "0.5rem",
+  paddingBottom: "12rem",
+  "@media (max-width: 640px)": {
+    paddingTop: "0.5rem",
+    paddingBottom: "8rem",
+  },
 });
 
 export function Career() {
+  const typedChars = useTyping(TITLE);
+  const shown = typedChars >= TITLE.length;
+  const row = (index: number) => typed(shown, index);
+  const rowCss = [listingRowStyle, listingColumnsStyle];
+  const last = 3 + ROLES.length;
+
   return (
     <div css={pageStyle}>
       <TopNavBar />
 
-      <div css={contentStyle}>
-        <h1 css={titleStyle}>Careers</h1>
+      <main css={mainStyle}>
+        <FrameLines />
 
-        <ul css={listStyle}>
-          <li>
-            <Link css={rowStyle} to="/career/product-engineer">
-              <div>
-                <div css={rowNameStyle}>Product Engineer</div>
-                <div css={rowMetaStyle}>Engineering · Full-time · Remote</div>
+        <header css={[frameColumnStyle, headerStyle, listingHeaderStyle]}>
+          <TypedTitle text={TITLE} count={typedChars} />
+
+          <div css={listingStyle} role="table" aria-label="Open positions">
+            <div
+              css={[...rowCss, listingHeadStyle, row(0).css]}
+              style={row(0).style}
+              role="row"
+            >
+              <span role="columnheader" aria-label="Type" />
+              <span role="columnheader">Name</span>
+              <span role="columnheader" className="wide">
+                Team
+              </span>
+              <span role="columnheader" className="wide">
+                Type
+              </span>
+              <span role="columnheader">Location</span>
+            </div>
+            <hr css={[hrStyle, row(1).css]} style={row(1).style} />
+
+            <div css={[...rowCss, row(2).css]} style={row(2).style} role="row">
+              <span css={iconCellStyle} role="cell">
+                [UP]
+              </span>
+              <span role="cell">
+                <SiteLink href="/" css={linkStyle}>
+                  Parent Directory
+                </SiteLink>
+              </span>
+              <span role="cell" className="wide" />
+              <span role="cell" className="wide" />
+              <span role="cell" />
+            </div>
+            {ROLES.map((role, index) => (
+              <div
+                key={role.slug}
+                css={[...rowCss, row(3 + index).css]}
+                style={row(3 + index).style}
+                role="row"
+              >
+                <span css={iconCellStyle} role="cell">
+                  [DIR]
+                </span>
+                <span role="cell">
+                  <SiteLink href={`/career/${role.slug}`} css={linkStyle}>
+                    {role.slug}/
+                  </SiteLink>
+                </span>
+                <span role="cell" className="wide">
+                  {role.team}
+                </span>
+                <span role="cell" className="wide">
+                  {role.type}
+                </span>
+                <span role="cell">{role.location}</span>
               </div>
-              <ArrowRight css={rowIconStyle} />
-            </Link>
-          </li>
-        </ul>
-      </div>
+            ))}
+            <hr css={[hrStyle, row(last).css]} style={row(last).style} />
+          </div>
+        </header>
+
+        <div css={row(last + 1).css} style={row(last + 1).style}>
+          <ServerSignature css={signatureStyle} />
+        </div>
+      </main>
 
       <Footer />
     </div>

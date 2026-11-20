@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, keyframes } from "@emotion/react";
+import { css } from "@emotion/react";
 import {
   useEffect,
   useRef,
@@ -11,29 +11,38 @@ import {
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
-import { FRAME_WIDTH, FrameLines } from "../components/FrameLines";
+import { FrameLines } from "../components/FrameLines";
 import { AsciiMedia, type AsciiSource } from "../components/AsciiMedia";
-import { usePageTransition } from "../components/PageTransition";
+import {
+  DATA,
+  LINE,
+  LINE_STEP_MS,
+  MONO,
+  MUTED,
+  SERIF,
+  ServerSignature,
+  SiteLink,
+  TITLE_CHAR_MS,
+  TypedTitle,
+  dividerStyle,
+  frameColumnStyle,
+  headerStyle,
+  hrStyle,
+  iconCellStyle,
+  linkStyle,
+  listingHeadStyle,
+  listingRowStyle,
+  listingStyle,
+  mainStyle,
+  pageStyle,
+  typed,
+  useTyping,
+} from "../components/EarlyWeb";
 
-// The page is dressed as an early web directory listing: Times headings,
-// monospace data, underlined blue links, with the products drawn in ASCII.
-const SERIF = '"Times New Roman", Times, serif';
-const MONO =
-  'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
-
-const LINE = "rgba(255, 255, 255, 0.1)";
-const MUTED = "#8a8a8f";
-const DATA = "#c4c4cc";
-// The browser-default link blue and visited purple, lifted to read on the
-// dark page.
-const LINK = "#7aa7ff";
-const LINK_HOVER = "#a9c6ff";
-const VISITED = "#b39dff";
+// The page is dressed as an early web directory listing (see EarlyWeb), with
+// the products drawn in ASCII.
 
 const TITLE = "Index of /products";
-const TITLE_CHAR_MS = 40;
-// Time between one typed line starting and the next.
-const LINE_STEP_MS = 90;
 // When the listing under the title is mostly typed in. The first product
 // waits for it, so the page writes itself top to bottom.
 const INTRO_MS = TITLE.length * TITLE_CHAR_MS + 4 * LINE_STEP_MS;
@@ -161,177 +170,12 @@ function useLastModified() {
 // ---------------------------------------------------------------------------
 // Styles
 
-const pageStyle = css({
-  width: "100%",
-  minHeight: "100%",
-  display: "flex",
-  flexDirection: "column",
-});
-
-// Fills the space above the footer so the frame lines reach it.
-const mainStyle = css({
-  position: "relative",
-  isolation: "isolate",
-  flex: 1,
-  width: "100%",
-  // Clips the full-width dividers without making a scroll box.
-  overflowX: "clip",
-});
-
-const frameColumnStyle = css({
-  width: "100%",
-  maxWidth: FRAME_WIDTH,
-  margin: "0 auto",
-  boxSizing: "border-box",
-});
-
-const headerStyle = css({
-  padding: "8rem 1.5rem 2.5rem",
-  "@media (max-width: 640px)": {
-    padding: "6.5rem 1rem 2rem",
-  },
-});
-
-const titleStyle = css({
-  margin: "0 0 1.75rem",
-  fontFamily: SERIF,
-  fontSize: "clamp(2rem, 6vw, 2.75rem)",
-  fontWeight: 700,
-  lineHeight: 1.1,
-  color: "#ffffff",
-});
-
-const blink = keyframes`
-  50% {
-    opacity: 0;
-  }
-`;
-
-const cursorStyle = css({
-  display: "inline-block",
-  width: "0.42em",
-  height: "0.82em",
-  marginLeft: "0.1em",
-  verticalAlign: "-0.06em",
-  backgroundColor: "#e6e6eb",
-  animation: `${blink} 1.06s steps(1, end) infinite`,
-  "@media (prefers-reduced-motion: reduce)": {
-    animation: "none",
-  },
-});
-
-// Each line is uncovered left to right in steps, like text being typed.
-const typeIn = keyframes`
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-`;
-
-const lineHiddenStyle = css({
-  clipPath: "inset(0 100% 0 0)",
-  "@media (prefers-reduced-motion: reduce)": {
-    clipPath: "none",
-  },
-});
-
-const lineTypedStyle = css({
-  clipPath: "none",
-  animation: `${typeIn} 0.5s steps(22, end) backwards`,
-  "@media (prefers-reduced-motion: reduce)": {
-    animation: "none",
-  },
-});
-
-function typed(shown: boolean, index: number, baseMs = 0) {
-  return {
-    css: shown ? lineTypedStyle : lineHiddenStyle,
-    style: { animationDelay: `${baseMs + index * LINE_STEP_MS}ms` },
-  };
-}
-
-const linkStyle = css({
-  color: LINK,
-  textDecoration: "underline",
-  textUnderlineOffset: "0.14em",
-  textDecorationThickness: "1px",
-  transition: "color 0.2s ease",
-  ":visited": {
-    color: VISITED,
-  },
-  ":hover": {
-    color: LINK_HOVER,
-  },
-  ":focus-visible": {
-    outline: `1px dotted ${LINK}`,
-    outlineOffset: "2px",
-  },
-});
-
-// The listing, set like Apache's autoindex page. Rows are grids with columns
-// sized in ch, so the monospace text lines up the way the original <pre> did.
-const listingStyle = css({
-  fontFamily: MONO,
-  fontSize: "0.8125rem",
-  lineHeight: 1.7,
-  color: DATA,
-  "@media (max-width: 640px)": {
-    fontSize: "0.75rem",
-  },
-});
-
-const listingRowStyle = css({
-  display: "grid",
+// Name, Last modified, License, Description; dates and licences drop out
+// first on narrow screens.
+const listingColumnsStyle = css({
   gridTemplateColumns: "5ch 17ch 17ch 10ch minmax(0, 1fr)",
-  columnGap: "2rem",
-  "> span": {
-    whiteSpace: "nowrap",
-  },
-  "> span:last-child": {
-    whiteSpace: "normal",
-  },
-  // Dates and licences drop out first on narrow screens.
   "@media (max-width: 640px)": {
     gridTemplateColumns: "5ch 13ch minmax(0, 1fr)",
-    columnGap: "1rem",
-    ".wide": {
-      display: "none",
-    },
-  },
-});
-
-const listingHeadStyle = css({
-  color: MUTED,
-});
-
-const iconCellStyle = css({
-  color: "#5c5c66",
-});
-
-// The browser-default <hr>: a sunken groove.
-const hrStyle = css({
-  height: 0,
-  margin: "0.45rem 0",
-  border: "none",
-  borderTop: "1px solid #3a3a42",
-  borderBottom: "1px solid #1c1c21",
-});
-
-// A 1px line that runs to both screen edges.
-const dividerStyle = css({
-  position: "relative",
-  height: "1px",
-  "::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: "50%",
-    width: "100vw",
-    height: "1px",
-    transform: "translateX(-50%)",
-    backgroundColor: LINE,
   },
 });
 
@@ -426,95 +270,11 @@ const leaderStyle = css({
   transform: "translateY(-0.3em)",
 });
 
-const addressStyle = css({
-  padding: "1.25rem 1.5rem 5rem",
-  fontFamily: SERIF,
-  fontSize: "0.95rem",
-  fontStyle: "italic",
-  color: MUTED,
-  "@media (max-width: 640px)": {
-    padding: "1.25rem 1rem 4rem",
-  },
-});
-
 // ---------------------------------------------------------------------------
 // Components
 
-function isInternal(href: string) {
-  return href.startsWith("/");
-}
-
-// Internal pages go through the same fade as the nav bar's links.
-function ProductLink({
-  href,
-  children,
-  tabIndex,
-  ariaHidden,
-  className,
-}: {
-  href: string;
-  children: ReactNode;
-  tabIndex?: number;
-  ariaHidden?: boolean;
-  className?: string;
-}) {
-  const transitionTo = usePageTransition();
-
-  if (isInternal(href)) {
-    const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-      const modified =
-        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-      if (modified) return;
-      event.preventDefault();
-      transitionTo(href);
-    };
-    return (
-      <a
-        className={className}
-        href={href}
-        onClick={onClick}
-        tabIndex={tabIndex}
-        aria-hidden={ariaHidden}
-      >
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <a
-      className={className}
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      tabIndex={tabIndex}
-      aria-hidden={ariaHidden}
-    >
-      {children}
-    </a>
-  );
-}
-
-function useTitleTyping() {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setCount(TITLE.length);
-      return;
-    }
-    const id = window.setInterval(() => {
-      setCount((n) => {
-        if (n >= TITLE.length) window.clearInterval(id);
-        return Math.min(TITLE.length, n + 1);
-      });
-    }, TITLE_CHAR_MS);
-    return () => window.clearInterval(id);
-  }, []);
-  return count;
-}
-
 function Listing({ dates }: { dates: Record<string, string | null> }) {
-  const typedChars = useTitleTyping();
+  const typedChars = useTyping(TITLE);
   const shown = typedChars >= TITLE.length;
 
   const scrollTo = (event: MouseEvent<HTMLAnchorElement>, slug: string) => {
@@ -531,14 +291,16 @@ function Listing({ dates }: { dates: Record<string, string | null> }) {
 
   return (
     <header css={[frameColumnStyle, headerStyle]}>
-      <h1 css={titleStyle} aria-label={TITLE}>
-        <span aria-hidden="true">{TITLE.slice(0, typedChars)}</span>
-        <span css={cursorStyle} aria-hidden="true" />
-      </h1>
+      <TypedTitle text={TITLE} count={typedChars} />
 
       <div css={listingStyle} role="table" aria-label="Products">
         <div
-          css={[listingRowStyle, listingHeadStyle, row(0).css]}
+          css={[
+            listingRowStyle,
+            listingColumnsStyle,
+            listingHeadStyle,
+            row(0).css,
+          ]}
           style={row(0).style}
           role="row"
         >
@@ -555,7 +317,7 @@ function Listing({ dates }: { dates: Record<string, string | null> }) {
         <hr css={[hrStyle, row(1).css]} style={row(1).style} />
 
         <div
-          css={[listingRowStyle, row(2).css]}
+          css={[listingRowStyle, listingColumnsStyle, row(2).css]}
           style={row(2).style}
           role="row"
         >
@@ -563,9 +325,9 @@ function Listing({ dates }: { dates: Record<string, string | null> }) {
             [UP]
           </span>
           <span role="cell">
-            <ProductLink href="/" css={linkStyle}>
+            <SiteLink href="/" css={linkStyle}>
               Parent Directory
-            </ProductLink>
+            </SiteLink>
           </span>
           <span role="cell" className="wide" />
           <span role="cell" className="wide">
@@ -576,7 +338,7 @@ function Listing({ dates }: { dates: Record<string, string | null> }) {
         {PRODUCTS.map((item, index) => (
           <div
             key={item.slug}
-            css={[listingRowStyle, row(3 + index).css]}
+            css={[listingRowStyle, listingColumnsStyle, row(3 + index).css]}
             style={row(3 + index).style}
             role="row"
           >
@@ -675,7 +437,7 @@ function Entry({
 
   return (
     <article ref={ref} id={item.slug} css={[frameColumnStyle, entryStyle]}>
-      <ProductLink
+      <SiteLink
         href={item.href}
         css={mediaLinkStyle}
         tabIndex={-1}
@@ -689,16 +451,16 @@ function Entry({
             label={`${item.name}, drawn in ASCII`}
           />
         </span>
-      </ProductLink>
+      </SiteLink>
 
       <div css={infoStyle}>
         <p css={[pathStyle, line(0).css]} style={line(0).style}>
           /products/{item.name}/ &nbsp;[{pad(index + 1)}]
         </p>
         <h2 css={[nameStyle, line(1).css]} style={line(1).style}>
-          <ProductLink href={item.href} css={linkStyle}>
+          <SiteLink href={item.href} css={linkStyle}>
             {item.name}
-          </ProductLink>
+          </SiteLink>
         </h2>
         <p css={[descriptionStyle, line(2).css]} style={line(2).style}>
           {item.description}
@@ -751,9 +513,7 @@ export function Product() {
           </div>
         ))}
 
-        <address css={[frameColumnStyle, addressStyle]}>
-          cartesiancs/1.0 Server at cartesiancs.com Port 443
-        </address>
+        <ServerSignature />
       </main>
 
       <Footer />
