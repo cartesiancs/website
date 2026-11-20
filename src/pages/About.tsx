@@ -1,17 +1,17 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "../App.css";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
 import { SpeakButton } from "../components/SpeakButton";
 import { TextReveal } from "../components/TextReveal";
+import { FRAME_WIDTH, FrameLines } from "../components/FrameLines";
 
-// Same 1024px frame as the footer, so their side lines meet.
-const FRAME_WIDTH = "1024px";
 const LINE = "rgba(255, 255, 255, 0.1)";
-const LG = "@media (min-width: 1024px)";
 
-// When the body copy starts writing in, so the hero lands first.
+// How long after the hero image starts wiping in the body copy starts
+// writing in, so the hero lands first.
 const BODY_REVEAL_DELAY_MS = 600;
 
 const pageStyle = css({
@@ -34,37 +34,46 @@ const mainStyle = css({
   overflowX: "clip",
 });
 
-// The frame's side lines. They fade in at the top and run down into the
-// footer's side borders.
-const frameLinesStyle = css({
-  display: "none",
-  position: "absolute",
-  top: 0,
-  bottom: 0,
-  left: 0,
-  right: 0,
-  maxWidth: FRAME_WIDTH,
-  margin: "0 auto",
-  boxSizing: "border-box",
-  borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
-  borderRight: "1px solid rgba(255, 255, 255, 0.15)",
-  pointerEvents: "none",
-  WebkitMaskImage: "linear-gradient(to bottom, transparent, black 14rem)",
-  maskImage: "linear-gradient(to bottom, transparent, black 14rem)",
-  [LG]: {
-    display: "block",
-  },
-});
-
 const heroStyle = css({
   width: "100%",
   maxWidth: FRAME_WIDTH,
   margin: "0 auto",
 });
 
-// Empty band above the divider.
-const heroContentStyle = css({
-  height: "15.5rem",
+// Pinned to the frame's top-left corner, as wide as the body copy below.
+const heroImageColumnStyle = css({
+  maxWidth: "568px",
+});
+
+// Shown whole at its own aspect ratio, never cropped. It stays hidden until it
+// has loaded, then is wiped into view from its left edge while it stays put.
+const heroImageStyle = css({
+  display: "block",
+  width: "100%",
+  height: "auto",
+  clipPath: "inset(0 100% 0 0)",
+  transition: "clip-path 1.1s cubic-bezier(0.65, 0, 0.35, 1)",
+  "@media (prefers-reduced-motion: reduce)": {
+    clipPath: "none",
+    opacity: 0,
+    transition: "opacity 0.3s ease",
+  },
+});
+
+const heroImageShownStyle = css({
+  clipPath: "inset(0 0 0 0)",
+  "@media (prefers-reduced-motion: reduce)": {
+    clipPath: "none",
+    opacity: 1,
+  },
+});
+
+// Holds the body copy's write-in at its first frame until the hero is in.
+// !important because each word's animation shorthand resets the play state.
+const pausedRevealStyle = css({
+  "& *": {
+    animationPlayState: "paused !important",
+  },
 });
 
 // A 1px line under the hero that runs to both screen edges.
@@ -175,10 +184,39 @@ function AboutText() {
   );
 }
 
-function Hero() {
+function Hero({ shown, onReady }: { shown: boolean; onReady: () => void }) {
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  // Decoding first keeps the slide from stuttering on its first frames.
+  const handleLoad = useCallback(() => {
+    const image = imageRef.current;
+    if (!image) return;
+    image
+      .decode()
+      .catch(() => {})
+      .finally(onReady);
+  }, [onReady]);
+
+  // A cached image can finish loading before the handler is attached.
+  useEffect(() => {
+    if (imageRef.current?.complete) handleLoad();
+  }, [handleLoad]);
+
   return (
     <section css={heroStyle}>
-      <div css={heroContentStyle} />
+      <div css={heroImageColumnStyle}>
+        <img
+          ref={imageRef}
+          css={[heroImageStyle, shown && heroImageShownStyle]}
+          src="/about-hero.webp"
+          alt=""
+          width={2560}
+          height={1463}
+          onLoad={handleLoad}
+          // If it never arrives, let the rest of the page come in anyway.
+          onError={onReady}
+        />
+      </div>
 
       <div css={dividerStyle} aria-hidden="true" />
     </section>
@@ -186,24 +224,30 @@ function Hero() {
 }
 
 export function About() {
+  const [heroShown, setHeroShown] = useState(false);
+  const showHero = useCallback(() => setHeroShown(true), []);
+
   return (
     <div css={pageStyle}>
       <TopNavBar />
 
       <main css={mainStyle}>
-        <div css={frameLinesStyle} aria-hidden="true" />
+        <FrameLines />
 
-        <Hero />
+        <Hero shown={heroShown} onReady={showHero} />
 
         {/* Same column as the markdown pages (see MarkdownContent). */}
         <div
-          css={css({
-            display: "flex",
-            alignItems: "center",
-            flexDirection: "column",
-            minHeight: "100%",
-            width: "100%",
-          })}
+          css={[
+            css({
+              display: "flex",
+              alignItems: "center",
+              flexDirection: "column",
+              minHeight: "100%",
+              width: "100%",
+            }),
+            !heroShown && pausedRevealStyle,
+          ]}
         >
           <div
             css={css({

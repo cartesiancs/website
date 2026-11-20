@@ -190,6 +190,7 @@ const company: FooterLink[] = [
 
 const writing: FooterLink[] = [
   { title: "Blog", href: "https://blog.cartesiancs.com/", external: true },
+  { title: "Research", href: "/research" },
 ];
 
 const columns = [

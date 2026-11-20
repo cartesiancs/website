@@ -6,7 +6,12 @@ import { MarkdownContent } from "../components/Markdown";
 import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
 
-export default function Post() {
+type PostProps = {
+  // The folder under public/docs that holds the markdown files.
+  folder?: string;
+};
+
+export default function Post({ folder = "post" }: PostProps) {
   const { slug } = useParams();
   const [postContent, setPostContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,9 +21,13 @@ export default function Post() {
     async function fetchPost() {
       try {
         // Try to fetch the markdown content from the server
-        const response = await fetch(`/docs/post/${slug}.md`);
+        const response = await fetch(`/docs/${folder}/${slug}.md`);
 
-        if (!response.ok) {
+        // A missing file comes back as the app's index.html, not a 404.
+        const isHtml = response.headers
+          .get("content-type")
+          ?.includes("text/html");
+        if (!response.ok || isHtml) {
           throw new Error("Post not found");
         }
 
@@ -35,7 +44,7 @@ export default function Post() {
     if (slug) {
       fetchPost();
     }
-  }, [slug]);
+  }, [folder, slug]);
 
   return (
     <div
