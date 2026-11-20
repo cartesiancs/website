@@ -17,6 +17,7 @@ import { Showcase } from "./pages/Showcase";
 import { VesselDocs } from "./pages/VesselDocs";
 import { Sponsors } from "./pages/Sponsors";
 import { Research } from "./pages/Research";
+import { Brand } from "./pages/Brand";
 
 // The Vessel site brings Tailwind and three.js with it, so it is
 // only downloaded when someone opens a /vessel page.
@@ -53,6 +54,7 @@ function App() {
           <Route path="/fleet" element={<Fleet />} />
           <Route path="/career" element={<Career />} />
           <Route path="/sponsors" element={<Sponsors />} />
+          <Route path="/brand" element={<Brand />} />
           <Route
             path="/career/product-engineer"
             element={<CareerProductEngineer />}
