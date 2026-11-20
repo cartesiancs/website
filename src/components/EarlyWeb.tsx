@@ -1,6 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { css, keyframes } from "@emotion/react";
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { FRAME_WIDTH } from "./FrameLines";
 import { usePageTransition } from "./PageTransition";
 
@@ -153,6 +161,79 @@ export const headingStyle = css({
   color: "#ffffff",
 });
 
+// Markdown rendered as a plain document: add to proseStyle on the element
+// that holds the rendered HTML.
+export const documentStyle = css({
+  // Korean posts break between words, not inside them.
+  wordBreak: "keep-all",
+  overflowWrap: "break-word",
+  "h1, h2, h3, h4": {
+    margin: "2rem 0 0.5rem",
+    fontFamily: SERIF,
+    fontWeight: 700,
+    lineHeight: 1.2,
+    color: "#ffffff",
+  },
+  "h1, h2": {
+    fontSize: "1.375rem",
+  },
+  "h3, h4": {
+    fontSize: "1.125rem",
+  },
+  a: linkStyle,
+  "ul, ol": {
+    margin: "0 0 1rem",
+  },
+  code: {
+    fontFamily: MONO,
+    fontSize: "0.85em",
+    padding: "0.05em 0.3em",
+    backgroundColor: "#17171b",
+    border: "1px solid #26262c",
+  },
+  pre: {
+    margin: "0 0 1rem",
+    padding: "0.9rem 1rem",
+    overflowX: "auto",
+    fontFamily: MONO,
+    fontSize: "0.8125rem",
+    lineHeight: 1.6,
+    backgroundColor: "#111114",
+    border: "1px solid #26262c",
+    code: {
+      padding: 0,
+      fontSize: "inherit",
+      backgroundColor: "transparent",
+      border: "none",
+    },
+  },
+  blockquote: {
+    margin: "0 0 1rem",
+    paddingLeft: "1rem",
+    borderLeft: "3px solid #3a3a42",
+    color: MUTED,
+  },
+  img: {
+    display: "block",
+    maxWidth: "100%",
+    height: "auto",
+    margin: "0 0 1rem",
+    border: "1px solid #2a2a30",
+  },
+  hr: hrStyle,
+  table: {
+    margin: "0 0 1rem",
+    borderCollapse: "collapse",
+    fontFamily: MONO,
+    fontSize: "0.8125rem",
+  },
+  "th, td": {
+    padding: "0.3rem 0.75rem",
+    border: "1px solid #3a3a42",
+    textAlign: "left",
+  },
+});
+
 // A raised grey form button with bevelled edges; pressed, the bevel flips.
 export const buttonStyle = css({
   display: "inline-flex",
@@ -220,6 +301,35 @@ export function typed(shown: boolean, index: number, baseMs = 0) {
   return {
     css: shown ? lineTypedStyle : lineHiddenStyle,
     style: { animationDelay: `${baseMs + index * LINE_STEP_MS}ms` },
+  };
+}
+
+const typedChildrenHiddenStyle = css({ "> *": lineHiddenStyle });
+const typedChildrenShownStyle = css({ "> *": lineTypedStyle });
+
+// The same typing, for markup whose children aren't ours to style one by one
+// (rendered markdown): each direct child of the element given `ref` types in
+// after the one before it, starting at line `startIndex`. Children past `max`
+// type in together.
+export function useTypedChildren<T extends HTMLElement>(
+  shown: boolean,
+  startIndex: number,
+  max = 40,
+) {
+  const ref = useRef<T>(null);
+  // The children change with the content, so stamp the delays after every
+  // render, before it paints.
+  useLayoutEffect(() => {
+    const children = ref.current?.children ?? [];
+    Array.from(children).forEach((child, index) => {
+      (child as HTMLElement).style.animationDelay = `${
+        (startIndex + Math.min(index, max)) * LINE_STEP_MS
+      }ms`;
+    });
+  });
+  return {
+    ref,
+    css: shown ? typedChildrenShownStyle : typedChildrenHiddenStyle,
   };
 }
 
@@ -385,6 +495,53 @@ export function SiteLink({
     </a>
   );
 }
+
+const parentDirectoryStyle = css({
+  margin: "0 0 1.25rem",
+  fontFamily: MONO,
+  fontSize: "0.8125rem",
+  lineHeight: 1.7,
+  "@media (max-width: 640px)": {
+    fontSize: "0.75rem",
+  },
+});
+
+// "[UP] Parent Directory", the way back above a page's title.
+export function ParentDirectory({
+  href,
+  className,
+  style,
+}: {
+  href: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <p css={parentDirectoryStyle} className={className} style={style}>
+      <span css={iconCellStyle}>[UP]</span>{" "}
+      <SiteLink href={href} css={linkStyle}>
+        Parent Directory
+      </SiteLink>
+    </p>
+  );
+}
+
+// A TypedTitle with a meta line under it gets this, so the two sit together.
+export const titleWithMetaStyle = css({
+  marginBottom: "0.5rem",
+});
+
+// The monospace line under a title, e.g. "Engineering · Full-time · Remote".
+export const metaLineStyle = css({
+  margin: "0 0 0.75rem",
+  fontFamily: MONO,
+  fontSize: "0.8125rem",
+  lineHeight: 1.7,
+  color: MUTED,
+  "@media (max-width: 640px)": {
+    fontSize: "0.75rem",
+  },
+});
 
 const addressStyle = css({
   padding: "1.25rem 1.5rem 5rem",

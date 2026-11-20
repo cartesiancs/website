@@ -5,21 +5,20 @@ import TopNavBar from "../components/TopNavbar";
 import Footer from "../components/Footer";
 import { FrameLines } from "../components/FrameLines";
 import {
-  MONO,
-  MUTED,
+  ParentDirectory,
   ServerSignature,
-  SiteLink,
   TypedTitle,
   articleStyle,
   frameColumnStyle,
   headerStyle,
   headingStyle,
   hrStyle,
-  iconCellStyle,
   linkStyle,
   mainStyle,
+  metaLineStyle,
   pageStyle,
   proseStyle,
+  titleWithMetaStyle,
   typed,
   useTyping,
 } from "../components/EarlyWeb";
@@ -56,31 +55,6 @@ const SECTIONS: [string, string[]][] = [
     ],
   ],
 ];
-
-const upStyle = css({
-  margin: "0 0 1.25rem",
-  fontFamily: MONO,
-  fontSize: "0.8125rem",
-  lineHeight: 1.7,
-  "@media (max-width: 640px)": {
-    fontSize: "0.75rem",
-  },
-});
-
-const titleStyle = css({
-  marginBottom: "0.5rem",
-});
-
-const metaStyle = css({
-  margin: "0 0 0.75rem",
-  fontFamily: MONO,
-  fontSize: "0.8125rem",
-  lineHeight: 1.7,
-  color: MUTED,
-  "@media (max-width: 640px)": {
-    fontSize: "0.75rem",
-  },
-});
 
 const bodyStyle = css({
   padding: "0.75rem 0 0.5rem",
@@ -121,15 +95,14 @@ export function CareerProductEngineer() {
         <FrameLines />
 
         <article css={[frameColumnStyle, headerStyle, articleStyle]}>
-          <p css={[upStyle, up.css]} style={up.style}>
-            <span css={iconCellStyle}>[UP]</span>{" "}
-            <SiteLink href="/career" css={linkStyle}>
-              Parent Directory
-            </SiteLink>
-          </p>
+          <ParentDirectory href="/career" css={up.css} style={up.style} />
 
-          <TypedTitle text={TITLE} count={typedChars} css={titleStyle} />
-          <p css={[metaStyle, meta.css]} style={meta.style}>
+          <TypedTitle
+            text={TITLE}
+            count={typedChars}
+            css={titleWithMetaStyle}
+          />
+          <p css={[metaLineStyle, meta.css]} style={meta.style}>
             Engineering · Full-time · Remote
           </p>
           <hr css={[hrStyle, topRule.css]} style={topRule.style} />

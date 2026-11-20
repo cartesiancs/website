@@ -18,7 +18,7 @@ const footerNav = {
     { name: "GitHub", href: "https://github.com/cartesiancs/vessel" },
   ],
   company: [
-    { name: "Blog", href: "https://blog.cartesiancs.com/" },
+    { name: "Blog", href: "https://cartesiancs.com/blog" },
     { name: "About", href: "https://cartesiancs.com/about" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/cartesiancs" },
     { name: "X", href: "https://x.com/cartesiancs" },

@@ -1,6 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router";
+import {
+  BrowserRouter,
+  Navigate,
+  Routes,
+  Route,
+  useParams,
+} from "react-router";
 import "./App.css";
 import { About } from "./pages/About";
 import { Product } from "./pages/Product";
@@ -18,10 +24,18 @@ import { VesselDocs } from "./pages/VesselDocs";
 import { Sponsors } from "./pages/Sponsors";
 import { Research } from "./pages/Research";
 import { Brand } from "./pages/Brand";
+import { Blog } from "./pages/Blog";
+import { blogPostMeta } from "./features/blog/posts";
 
 // The Vessel site brings Tailwind and three.js with it, so it is
 // only downloaded when someone opens a /vessel page.
 const VesselApp = lazy(() => import("./vessel/VesselApp"));
+
+// Posts used to live at /posts/<slug>; keep those links working.
+function OldPostRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/blog/${slug}`} replace />;
+}
 
 function App() {
   return (
@@ -45,11 +59,16 @@ function App() {
               </Suspense>
             }
           />
-          <Route path="/posts/:slug" element={<Post />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route
+            path="/blog/:slug"
+            element={<Post folder="post" parent="/blog" meta={blogPostMeta} />}
+          />
+          <Route path="/posts/:slug" element={<OldPostRedirect />} />
           <Route path="/research" element={<Research />} />
           <Route
             path="/research/:slug"
-            element={<Post folder="research" />}
+            element={<Post folder="research" parent="/research" />}
           />
           <Route path="/fleet" element={<Fleet />} />
           <Route path="/career" element={<Career />} />
